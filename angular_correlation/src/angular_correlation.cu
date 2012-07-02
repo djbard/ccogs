@@ -22,7 +22,7 @@ using namespace std;
 // Kernel to calculate angular distances between galaxies and histogram
 // the distances.
 ////////////////////////////////////////////////////////////////////////
-__global__ void distance(volatile float *a0, volatile float *d0, volatile float *a1, volatile float *d1, int xind, int yind, volatile int *dev_hist, float hist_min, float hist_max, int nbins, float bin_width, int log_binning=0, bool two_different_files=1, float conv_factor_angle=57.2957795)
+__global__ void distance(volatile float *a0, volatile float *d0, volatile float *a1, volatile float *d1, int xind, int yind, int max_xind, int max_yind, volatile int *dev_hist, float hist_min, float hist_max, int nbins, float bin_width, int log_binning=0, bool two_different_files=1, float conv_factor_angle=57.2957795)
 {
 
     ////////////////////////////////////////////////////////////////////////////
@@ -47,6 +47,8 @@ __global__ void distance(volatile float *a0, volatile float *d0, volatile float 
     __syncthreads();
     ////////////////////////////////////////////////////////////////////////
 
+    if (idx<max_xind)
+    {
     int i=0;
 
     float alpha_rad = a0[idx];
@@ -66,6 +68,10 @@ __global__ void distance(volatile float *a0, volatile float *d0, volatile float 
 
     int ymax = yind + SUBMATRIX_SIZE;
 
+    if (ymax>max_yind)
+    {
+        ymax = max_yind;
+    }
 
     for(i=yind; i<ymax; i++)
     {
@@ -136,6 +142,7 @@ __global__ void distance(volatile float *a0, volatile float *d0, volatile float 
             atomicAdd(&shared_hist[bin_index],1);
 
         }
+    }
     }
 
     __syncthreads();
@@ -459,61 +466,73 @@ int main(int argc, char **argv)
     // 128*4 = 512, the amount of memory needed for one histogram.
     // 8192*4 = 32768 is max memory to ask for for the histograms.
     // 8192/128 = 64, is is the right number of blocks?
-    grid.x = 8192/(DEFAULT_NBINS+2); // Is this the number of blocks?
-    block.x = SUBMATRIX_SIZE/grid.x; // Is this the number of threads per block? NUM_GALAXIES/block.x;
-    // SUBMATRIX is the number of threads per warp? Per kernel call?
-    ////////////////////////////////////////////////////////////////////////////
+        grid.x = 8192/(DEFAULT_NBINS+2); // Is this the number of blocks?
+        block.x = SUBMATRIX_SIZE/grid.x; // Is this the number of threads per block? NUM_GALAXIES/block.x;
+        // SUBMATRIX is the number of threads per warp? Per kernel call?
+        ////////////////////////////////////////////////////////////////////////////
 
-    cudaMalloc((void **) &d_alpha0, size_of_galaxy_array );
-    cudaMalloc((void **) &d_delta0, size_of_galaxy_array );
+        cudaMalloc((void **) &d_alpha0, size_of_galaxy_array );
+        cudaMalloc((void **) &d_delta0, size_of_galaxy_array );
 
-    cudaMalloc((void **) &d_alpha1, size_of_galaxy_array );
-    cudaMalloc((void **) &d_delta1, size_of_galaxy_array );
+        cudaMalloc((void **) &d_alpha1, size_of_galaxy_array );
+        cudaMalloc((void **) &d_delta1, size_of_galaxy_array );
 
-    // Check to see if we allocated enough memory.
-    if (0==d_alpha0 || 0==d_delta0 || 0==d_alpha1 || 0==d_delta1 || 0==dev_hist)
-    {
-        printf("couldn't allocate memory\n");
-        return 1;
-    }
-
-    // Initialize array to all 0's
-    cudaMemset(d_alpha0,0,size_of_galaxy_array);
-    cudaMemset(d_delta0,0,size_of_galaxy_array);
-    cudaMemset(d_alpha1,0,size_of_galaxy_array);
-    cudaMemset(d_delta1,0,size_of_galaxy_array);
-
-    cudaMemcpy(d_alpha0, h_alpha0, size_of_galaxy_array, cudaMemcpyHostToDevice );
-    cudaMemcpy(d_delta0, h_delta0, size_of_galaxy_array, cudaMemcpyHostToDevice );
-    cudaMemcpy(d_alpha1, h_alpha1, size_of_galaxy_array, cudaMemcpyHostToDevice );
-    cudaMemcpy(d_delta1, h_delta1, size_of_galaxy_array, cudaMemcpyHostToDevice );
-
-    int x, y;
-    int num_submatrices = NUM_GALAXIES / SUBMATRIX_SIZE;
-
-    printf("Breaking down the calculations.\n");
-    printf("Number of submatrices: %dx%d\n",num_submatrices,num_submatrices);
-    printf("Number of calculations per submatrices: %dx%d\n",SUBMATRIX_SIZE,SUBMATRIX_SIZE);
-
-
-    int bin_index = 0;
-    for(int k = 0; k < num_submatrices; k++)
-    {
-        y = k*SUBMATRIX_SIZE;
-        //printf("%d %d\n",k,y);
-        for(int j = 0; j < num_submatrices; j++)
+        // Check to see if we allocated enough memory.
+        if (0==d_alpha0 || 0==d_delta0 || 0==d_alpha1 || 0==d_delta1 || 0==dev_hist)
         {
-            x = j *SUBMATRIX_SIZE; 
+            printf("couldn't allocate memory\n");
+            return 1;
+        }
 
-            //printf("----\n");
-            //printf("%d %d\t\t%d %d\n",k,y,j,x);
-            //printf("----\n");
+        // Initialize array to all 0's
+        cudaMemset(d_alpha0,0,size_of_galaxy_array);
+        cudaMemset(d_delta0,0,size_of_galaxy_array);
+        cudaMemset(d_alpha1,0,size_of_galaxy_array);
+        cudaMemset(d_delta1,0,size_of_galaxy_array);
 
-            // Set the histogram to all zeros each time.
-            cudaMemset(dev_hist,0,size_hist_bytes);
+        cudaMemcpy(d_alpha0, h_alpha0, size_of_galaxy_array, cudaMemcpyHostToDevice );
+        cudaMemcpy(d_delta0, h_delta0, size_of_galaxy_array, cudaMemcpyHostToDevice );
+        cudaMemcpy(d_alpha1, h_alpha1, size_of_galaxy_array, cudaMemcpyHostToDevice );
+        cudaMemcpy(d_delta1, h_delta1, size_of_galaxy_array, cudaMemcpyHostToDevice );
 
-            //__global__ void distance(float *a0, float *d0, float *a1, float *d1, int xind, int yind, int *dev_hist, float hist_min, float hist_max, int nbins, float bin_width, bool log_binning=0, bool two_different_files=1)
-            distance<<<grid,block>>>(d_alpha0, d_delta0,d_alpha1, d_delta1, x, y, dev_hist, hist_lower_range, hist_upper_range, nbins, hist_bin_width, log_binning_flag, two_different_files,conv_factor_angle);
+        int x, y;
+        int num_submatrices = NUM_GALAXIES / SUBMATRIX_SIZE;
+
+        // Take care of edges of matrix.
+        if (NUM_GALAXIES%SUBMATRIX_SIZE != 0)
+        {
+            num_submatrices += 1;
+            //SUBMATRIX_SIZE = NUM_GALAXIES;
+        }
+
+
+        printf("Breaking down the calculations.\n");
+        printf("Number of submatrices: %dx%d\n",num_submatrices,num_submatrices);
+        printf("Number of calculations per submatrices: %dx%d\n",SUBMATRIX_SIZE,SUBMATRIX_SIZE);
+
+
+        int bin_index = 0;
+        for(int k = 0; k < num_submatrices; k++)
+        {
+            y = k*SUBMATRIX_SIZE;
+            //printf("%d %d\n",k,y);
+            for(int j = 0; j < num_submatrices; j++)
+            {
+                x = j *SUBMATRIX_SIZE; 
+
+                //printf("----\n");
+                //printf("%d %d\t\t%d %d\n",k,y,j,x);
+                //printf("----\n");
+
+                // Set the histogram to all zeros each time.
+                cudaMemset(dev_hist,0,size_hist_bytes);
+
+                //__global__ void distance(float *a0, float *d0, float *a1, float *d1, int xind, int yind, int *dev_hist, float hist_min, float hist_max, int nbins, float bin_width, bool log_binning=0, bool two_different_files=1)
+
+                int max_x = NUM_GALAXIES;
+                int max_y = NUM_GALAXIES;
+
+            distance<<<grid,block>>>(d_alpha0, d_delta0,d_alpha1, d_delta1, x, y, max_x, max_y, dev_hist, hist_lower_range, hist_upper_range, nbins, hist_bin_width, log_binning_flag, two_different_files,conv_factor_angle);
             cudaMemcpy(hist, dev_hist, size_hist_bytes, cudaMemcpyDeviceToHost);
 
             ////////////////////////////////////////////////////////////////////
@@ -534,9 +553,6 @@ int main(int argc, char **argv)
     //fprintf(outfile, "%s %s\n", "Angular Distance(radians)","Number of Entries");      
     float lo = hist_lower_range;
     float hi = 0;
-    //printf("hist_lower_range: %f\n",hist_lower_range);
-    //printf("hist_upper_range: %f\n",hist_upper_range);
-    //printf("hist_bin_width: %f\n",hist_bin_width);
     for(int k=0; k<nbins+1; k++)
     {
         if (k==0)

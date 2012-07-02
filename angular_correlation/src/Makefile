@@ -20,8 +20,6 @@ LIBS              += -L$(CUDA_INSTALL_PATH)/lib64
 
 CXXFLAGS          := $(COMMONFLAGS)
 
-#LDFLAGS := -lSystem.B -lm -lcudart -lcutil_x86_64 
-#LDFLAGS := -lm -lcudart 
 LDFLAGS := -lcudart
 
 # compilers
@@ -41,7 +39,7 @@ $(OBJ_DIR)/angular_correlation.cu_o : angular_correlation.cu
 
 angular_correlation_C_version : angular_correlation_C_version.cc
 	mkdir -p $(INSTALL_DIR)
-	$(CC) -o $(INSTALL_DIR)/$@ $@.cc
+	$(CC) -O1 -o $(INSTALL_DIR)/$@ $@.cc
 
 clean:
 	rm -f $(INSTALL_DIR)/angular_correlation_C_version 
