@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -9,16 +10,24 @@ def main():
     ############################################################################
     # Open the files and read the data.
     # 
-    # You will have to manually edit the filename and number of galaxies
+    # You may prefer to manually edit the filename and number of galaxies
     # in the datasets.
     ############################################################################
     
-    ngalaxies = 10000.0
+    # Read in off the command line some string to look for in the 
+    # input files.
+    tag = 'logbinning_GPU_100k'
+    if len(sys.argv)>=2:
+        tag = sys.argv[1]
 
     filenames = [None,None,None]
-    filenames[0] = "logbinning_GPU_10k_data_data_arcmin.dat" # DD
-    filenames[1] = "logbinning_GPU_10k_flat_flat_arcmin.dat" # RR
-    filenames[2] = "logbinning_GPU_10k_data_flat_arcmin.dat" # DR
+    filenames[0] = "%s_data_data_arcmin.dat" % (tag) # DD
+    filenames[1] = "%s_flat_flat_arcmin.dat" % (tag) # RR
+    filenames[2] = "%s_data_flat_arcmin.dat" % (tag) # DR
+
+    # Pull the number of galaxies out of the file name.
+    ngal_in_file = tag.split('_')[-1][0:-1]
+    ngalaxies = float(ngal_in_file)*1000.0
 
     ############################################################################
     ############################################################################
@@ -28,12 +37,22 @@ def main():
     dr = None
     bin_lo = None
     bin_hi = None
+
+    # Loop over the files and pull out the necessary info.
     for i,name in enumerate(filenames):
+
+        print "Opening: ",name 
         infile = open(name)
+
+        # Parse the entire contents of the file into a big array of floats.
         content = np.array(infile.read().split()).astype('float')
+
+        # We know there are three columns of numbers, so we can pull out what
+        # we want using an array of the indices.
         nentries = len(content)
         nbins = nentries/3
         index = np.arange(0,nentries,3)
+
         if i==0:
             bin_lo = content[index]
             bin_hi = content[index+1]
@@ -50,14 +69,16 @@ def main():
     rr_norm = ((ngalaxies*ngalaxies)-ngalaxies)/2.0
     dr_norm = (ngalaxies*ngalaxies)
 
-    print dd_norm 
-    print rr_norm 
-    print dr_norm 
+    print "DD normalization:",dd_norm 
+    print "RR normalization:",rr_norm 
+    print "DR normalization:",dr_norm 
 
+    # Normalize the data appropriately.
     dd /= dd_norm
     rr /= rr_norm
     dr /= dr_norm
      
+    # Calculate the angular correlation function here.
     w = (dd-(2*dr)+rr)/rr
 
     bin_mid = (bin_hi+bin_lo)/2.0
@@ -65,6 +86,17 @@ def main():
 
     # Divide out the bin width.
     w /= bin_width
+
+    ############################################################################
+    # Write out the function to a file.
+    ############################################################################
+    outfile = open('default_acf.dat','w+')
+    for lo,hi,wval in zip(bin_lo,bin_hi,w):
+        if wval==wval: # Check for nans and infs
+            output = "%.3e %.3e %d\n" % (lo,hi,wval)
+            outfile.write(output)
+    outfile.close()
+    ############################################################################
 
     ################################################################################
     # Make a figure on which to plot the angular correlation function.
