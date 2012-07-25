@@ -79,13 +79,13 @@ def main():
     dr /= dr_norm
      
     # Calculate the angular correlation function here.
-    w = (dd-(2*dr)+rr)/rr
+    w = (dd-(2.0*dr)+rr)/rr
 
     bin_mid = (bin_hi+bin_lo)/2.0
     bin_width = (bin_hi-bin_lo)
 
     # Divide out the bin width.
-    w /= bin_width
+    #w /= bin_width
 
     ############################################################################
     # Write out the function to a file.
@@ -93,7 +93,7 @@ def main():
     outfile = open('default_acf.dat','w+')
     for lo,hi,wval in zip(bin_lo,bin_hi,w):
         if wval==wval: # Check for nans and infs
-            output = "%.3e %.3e %d\n" % (lo,hi,wval)
+            output = "%.3e %.3e %f\n" % (lo,hi,wval)
             outfile.write(output)
     outfile.close()
     ############################################################################
@@ -127,7 +127,8 @@ def main():
     #ax0.set_xlim(-100,5000)
     ax0.set_xlim(-10,130)
     #ax0.set_ylim(-0.7,2.8)
-    ax0.set_ylim(0.01,100)
+    #ax0.set_ylim(0.01,100)
+    ax0.set_ylim(0.01,5)
 
     plt.show()
 
