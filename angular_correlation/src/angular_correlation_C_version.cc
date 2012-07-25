@@ -69,7 +69,6 @@ int main(int argc, char **argv)
     char *outfilename = NULL;
     char defaultoutfilename[256];
     sprintf(defaultoutfilename,"default_out.dat");
-    char *binning_filename = NULL;
     FILE *binning_file = NULL;
 
     float hist_lower_range = 0.0000001;
@@ -85,12 +84,8 @@ int main(int argc, char **argv)
     ////////////////////////////////////////////////////////////////////////////////
 
 
-    while ((c = getopt(argc, argv, "ab:o:L:N:l:w:sm")) != -1) {
+    while ((c = getopt(argc, argv, "ao:L:l:w:sm")) != -1) {
         switch(c) {
-            case 'N':
-                printf("N is set\n");
-                nbins = atoi(optarg);
-                break;
             case 'L':
                 printf("L is set\n");
                 hist_lower_range = atof(optarg);
@@ -102,10 +97,6 @@ int main(int argc, char **argv)
             case 'l':
                 log_binning_flag = atoi(optarg);
                 printf("Will use log binning.\n");
-                break;
-            case 'b':
-                binning_filename = optarg;
-                printf("Using binning information from file: %s\n",binning_filename);
                 break;
             case 's':
                 scale_factor = 206264.0; // To convert arcseconds to radians.
@@ -322,35 +313,17 @@ int main(int argc, char **argv)
     //allocation of histogram
     ///////////////////////////////////////////////////////////////////////////
 
-    int *hist, *dev_hist;
+    unsigned long *hist;
     float hist_min = hist_lower_range;
     float hist_max = hist_upper_range;
     //int nbins;
     float bin_width = hist_bin_width;
     int log_binning=log_binning_flag;
-    //float conv_factor_angle=57.2957795;
-
-    // Log binning
-    //float h_bin_edges[30] = {0.001000,0.001585,0.002512,0.003981,0.006310,0.010000,0.010000,0.015849,0.025119,0.039811,0.063096,0.100000,0.100000,0.158489,0.251189,0.398107,0.630957,1.000000,1.000000,1.584893,2.511886,3.981072,6.309573,10.000000,10.000000,15.848932,25.118864,39.810717,63.095734,100.000000};
-
-    // For 27 bins
-    //float h_bin_edges[NUM_BIN] = {0.0000,0.001000,0.001585,0.002512,0.003981,0.006310,0.010000,0.015849,0.025119,0.039811,0.063096,0.100000,0.158489,0.251189,0.398107,0.630957,1.000000,1.584893,2.511886,3.981072,6.309573,10.000000,15.848932,25.118864,39.810717,63.095734,100.000000};
-
-    // For 37 bins
-    //float h_bin_edges[NUM_BIN] = {0.0000,0.001000,0.001389,0.001931,0.002683,0.003728,0.005179,0.007197,0.010000,0.013895,0.019307,0.026827,0.037276,0.051795,0.071969,0.100000,0.138950,0.193070,0.268270,0.372759,0.517947,0.719686,1.000000,1.389495,1.930698,2.682696,3.727594,5.179475,7.196857,10.000000,13.894955,19.306977,26.826958,37.275937,51.794747,71.968567,100.000000};
-
-    /*
-       for (int i=0;i<NUM_BIN;i++)
-       {
-       printf("%d %f\n",i,h_bin_edges[i]);
-       }
-       printf("\n");
-     */
 
     int size_hist = (nbins+2);
-    int size_hist_bytes = size_hist*sizeof(int);
+    int size_hist_bytes = size_hist*sizeof(unsigned long);
 
-    hist = (int*)malloc(size_hist_bytes);
+    hist = (unsigned long*)malloc(size_hist_bytes);
     memset(hist, 0, size_hist_bytes);
 
     int x, y;
@@ -383,33 +356,10 @@ int main(int argc, char **argv)
                 else
                     do_calc=0;
             }
-            //if(idx > i) ///////// CHECK THIS
+            
             if (do_calc)
             {
                 dist = distance(h_alpha0[i],h_delta0[i],h_alpha1[j],h_delta1[j],conv_factor_angle);
-
-                /*
-                   if(dist < HIST_MIN)
-                   bin_index = 0; 
-                   else if(dist >= HIST_MAX)
-                   bin_index = NUM_BIN + 1;
-                   else
-                   {
-                //bin_index = int(((dist - HIST_MIN) * NUM_BIN / HIST_MAX) +1);    
-                bin_index = 0;
-                for (int k=0;k<NUM_BIN-1;k++)
-                {
-                //bin_index = 5;
-                //if (dist>=0.1*j && dist<0.1*(j+1))
-                //if (dist>=dev_bin_edges[j] && dist<dev_bin_edges[j+1])
-                if (dist>=h_bin_edges[k] && dist<h_bin_edges[k+1])
-                {
-                bin_index = k+1;
-                break;
-                }
-                }
-                }
-                 */
 
                 if(dist < hist_min)
                     bin_index = 0;
@@ -438,7 +388,6 @@ int main(int argc, char **argv)
     }  
 
     unsigned long total = 0;
-    //float  bin_width = (HIST_MAX - HIST_MIN) / NUM_BIN;
     float bins_mid = 0;
 
     float lo = hist_lower_range;
@@ -447,7 +396,7 @@ int main(int argc, char **argv)
     {
         if (k==0)
         {
-            //fprintf(outfile, "Underflow below %.3e %s %lu \n", lo, ",",  hist_array[k]);
+            //fprintf(outfile, "Underflow below %.3e %s %lu \n", lo, ",",  hist[k]);
         }
         else
         {
@@ -466,34 +415,13 @@ int main(int argc, char **argv)
                 hi = pow(10,(log10(lo) + hist_bin_width));
             }
 
-            bins_mid = (hi+lo)/2.0;
-
-            fprintf(outfile, "%.3e %s %lu \n", bins_mid, ",",  hist[k]);
+            fprintf(outfile, "%.3e %.3e %lu \n",lo,hi,hist[k]);
             total += hist[k];
 
             lo = hi;
         }
     }
     printf("total: %lu \n", total);
-    /*
-    fprintf(outfile, "%s %s\n", "Angular Distance(radians)","Number of Entries");      
-    for(int k=0; k<nbins+1; k++)
-    {
-        //bins_mid = bin_width*(k - 0.5);
-
-        //float lo = h_bin_edges[k];
-        //float hi = h_bin_edges[k+1];
-        float lo = 0.0;
-        float hi = 1.0;
-
-        bins_mid = (hi+lo)/2.0;
-
-        fprintf(outfile, "%.3e %s %lu \n", bins_mid, ",",  hist[k]);
-        total += hist[k];
-
-    }
-    printf("total: %lu \n", total);
-    */
 
     fclose(infile0);
     fclose(infile1);

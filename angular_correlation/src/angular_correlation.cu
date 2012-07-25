@@ -10,6 +10,11 @@ using namespace std;
 
 #define SUBMATRIX_SIZE 16384
 
+////////////////////////////////////////////////////////////////////////
+// Number of histogram bins has to be edited by hand, prior to
+// copmilation.
+////////////////////////////////////////////////////////////////////////
+
 #define DEFAULT_NBINS 254 
 //#define DEFAULT_NBINS 126 
 //#define DEFAULT_NBINS 62 
@@ -30,7 +35,6 @@ __global__ void distance(volatile float *a0, volatile float *d0, volatile float 
     ////////////////////////////////////////////////////////////////////////////
     int idx = blockIdx.x * blockDim.x + threadIdx.x; // This should range to SUBMATRIX_SIZE
 
-    int thread_idx = idx;
     idx += xind;
 
     ////////////////////////////////////////////////////////////////////////
@@ -57,7 +61,6 @@ __global__ void distance(volatile float *a0, volatile float *d0, volatile float 
         float dist;
 
         int bin_index = 0; 
-        int offset = 0;
 
         float a_diff, sin_a_diff, cos_a_diff;
         float cos_d1, sin_d1, numer, denom, mult1, mult2;    
@@ -155,12 +158,9 @@ int main(int argc, char **argv)
     extern char *optarg;
     extern int optind, optopt, opterr;
     int c;
-    char *filename;
     char *outfilename = NULL;
     char defaultoutfilename[256];
     sprintf(defaultoutfilename,"default_out.dat");
-    char *binning_filename = NULL;
-    FILE *binning_file = NULL;
 
     float hist_lower_range = 0.0000001;
     float hist_upper_range = 0;
@@ -175,12 +175,8 @@ int main(int argc, char **argv)
     ////////////////////////////////////////////////////////////////////////////////
 
 
-    while ((c = getopt(argc, argv, "ab:o:L:N:l:w:sm")) != -1) {
+    while ((c = getopt(argc, argv, "ao:L:l:w:sm")) != -1) {
         switch(c) {
-            case 'N':
-                printf("N is set\n");
-                nbins = atoi(optarg);
-                break;
             case 'L':
                 printf("L is set\n");
                 hist_lower_range = atof(optarg);
@@ -192,10 +188,6 @@ int main(int argc, char **argv)
             case 'l':
                 log_binning_flag = atoi(optarg);
                 printf("Will use log binning.\n");
-                break;
-            case 'b':
-                binning_filename = optarg;
-                printf("Using binning information from file: %s\n",binning_filename);
                 break;
             case 's':
                 scale_factor = 206264.0; // To convert arcseconds to radians.
@@ -311,7 +303,7 @@ int main(int argc, char **argv)
         printf("Found %d CUDA Capable device(s)\n", deviceCount);
 
 
-    int dev, driverVersion = 0, runtimeVersion = 0;
+    int dev=0;
     for (dev = 0; dev < deviceCount; ++dev) {
         cudaDeviceProp deviceProp;
         cudaGetDeviceProperties(&deviceProp, dev);
@@ -372,8 +364,6 @@ int main(int argc, char **argv)
 
     float *d_alpha1, *d_delta1;
     float *h_alpha1, *h_delta1;
-
-    float *h_bin_edges;
 
     int NUM_GALAXIES;
 
@@ -511,8 +501,6 @@ int main(int argc, char **argv)
             // Set the histogram to all zeros each time.
             cudaMemset(dev_hist,0,size_hist_bytes);
 
-            //__global__ void distance(float *a0, float *d0, float *a1, float *d1, int xind, int yind, int *dev_hist, float hist_min, float hist_max, int nbins, float bin_width, bool log_binning=0, bool two_different_files=1)
-
             int max_x = NUM_GALAXIES;
             int max_y = NUM_GALAXIES;
 
@@ -531,10 +519,7 @@ int main(int argc, char **argv)
     }
 
     unsigned long total = 0;
-    //float  bin_width = (hist_upper_range - hist_lower_range) / nbins;
-    float bins_mid = 0;
 
-    //fprintf(outfile, "%s %s\n", "Angular Distance(radians)","Number of Entries");      
     float lo = hist_lower_range;
     float hi = 0;
     for(int k=0; k<nbins+1; k++)
@@ -559,8 +544,6 @@ int main(int argc, char **argv)
                 //printf("lo: %f\t\tlog10(lo): %f\n",lo,log10(lo));
                 hi = pow(10,(log10(lo) + hist_bin_width));
             }
-
-            //bins_mid = (hi+lo)/2.0;
 
             fprintf(outfile, "%.3e %.3e %lu \n",lo,hi,hist_array[k]);
             total += hist_array[k];
