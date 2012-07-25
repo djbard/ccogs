@@ -14,10 +14,10 @@ set data = '../sample_data/data_'$ngals'k_arcmin.dat'
 ################################################################################
 # Read in data assuming arc minutes. (-m)
 # Even-spaced binning (-l 0)
-# Bin width of 10.0 (-w 10.0)
+# Bin width of 1.0 (-w 1.0)
 # Low-edge of 1st bin is 1 arg min. (-L 1.00)
 ################################################################################
-set global_params = '-w 10.0 -L 1.00 -l 0 -m'
+set global_params = '-w 1.0 -L 1.00 -l 0 -m'
 set tag = 'evenbinning_GPU'
 
 ################################################################################
