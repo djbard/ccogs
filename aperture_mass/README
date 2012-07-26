@@ -1,0 +1,28 @@
+
+#################################
+#   Aperture Mass Calculation   
+#################################
+
+This code calculates the aperture mass map for a given dataset. For details on the theoretical background to the calculation, and performance of this implementation on the GPU, see the accompanying paper Bard + Bellis, 2012 (*** add refernce once it appears on the arXiv). 
+Essentially, to calculate the aperture mass for a point on the sky, you must sum over the weighted tangential components of ellipticity of the surrounding galaxies. If the weight function used matches the shape of projected mass peaks, then the aperture mass is a matched filter for identifying those peaks. 
+ In this code, we use the filter proposed by Schirmer et al (2007), which is an NFW profile with exponential cut-offs at zero and large radii. We intend to implement other filter functions in this code in future releases; in the meantime, it should be straightfoward to add a new filter in src/mAp_gpu_grid.cu (or mAp_gpu_gals.cu). 
+
+
+#########################
+#   Inputs 
+#########################
+The input catalog should be in plain text, one galaxy per line, with four columns giving the RA, dec and two components of shear for each galaxy. Lines containing the # character will be ignored when reading in the file. An example is given in examples/example_cat_small.txt, which contains data from a  n-body simulation for a fiducial cosmology (Kratochvil et al, 2010). 
+
+
+#########################
+#  Compiling
+#########################
+The code is in the /src directoty, and you will need to make some modifications to the Makefile in order to get the code to compile on your machine. You will need to set the path to the cuda SDK, and the path to your cuda intallation. 
+ Once that is set up, you should just be able to type "make" in the src/ directory to compile. By default, the binary file is placed in this directory. If you change this, be aware that you will need to specify that location when you run the examples. 
+ There are two different binaries created - one to calculate the aperture mass at the positions of galaxies and one to calculate it at positions on a grid on the sky. 
+
+########################
+#  Example code
+########################
+The directory examples/ contains all you need to run the code on your GPU. You will need to edit the run_mAp.py code to point to your input and output files, and to specify a few options. You can chose the critical radius of the NFW-like filter used in the aperture mass calculation, and where the aperture mass is evaluated. Your performance will vary, depending on how you set these parameters.
+ We include two example catalogues - one containing 100,000 objects (examples/example_cat_small.cat) and one containing 1,500,000 objects (examples/example_cat_large.cat). 
