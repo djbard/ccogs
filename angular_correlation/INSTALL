@@ -73,7 +73,18 @@ in the users "PATH" variable.
     SDK_INSTALL_PATH  := ${HOME}/CUDA/SDK_4.0/
     CUDA_INSTALL_PATH := /opt/cuda/
     
+You may have to edit thse paths to point to where your CUDA libraries and SDK
+are installed. Note that these paths appear in the definitions of the include
+files and library paths. There is a chance you may have to edit these as well.
 
+    INCLUDES          += -I. -I$(SDK_INSTALL_PATH)/C/common/inc/ -I$(CUDA_INSTALL_PATH)/include/
+    LIBS              += -L. -L$(SDK_INSTALL_PATH)/C/lib/ -L$(CUDA_INSTALL_PATH)//usr/lib/x86_64-linux-gnu/
+    LIBS              += -L$(CUDA_INSTALL_PATH)/lib64
+
+We have found many CUDA installations to be somewhat different and rather than 
+trying to provide a fix for every set-up, we have merely tried to provide some 
+guidance. If you are still having problems, please consult us or the NVIDIA 
+CUDA documentation.
 
 
 

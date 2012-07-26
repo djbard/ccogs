@@ -2,5 +2,81 @@
 # README
 ################################################################################
 
-Debbie pwned me!
+This package uses the CUDA programming language to calculate the two-point
+angular correlation function on a GPU. Details about the function itself
+can be found in the documentation referenced in the README in the ccogs
+parent directory.
 
+
+################################################################################
+# Installation
+################################################################################
+
+For installation instructions, please see the INSTALL file in this directory.
+
+
+################################################################################
+# Sample data
+################################################################################
+
+We have provided you with 4 sample files in the "sample_data" directory, with
+which you can test your installation. There are two files files that are taken
+from a dark matter simulation and subsequently decorated with galaxies. These 
+files have 10k and 100k galaxies respectively and contain two columns listing
+the right ascension and declination for the galaxies. The other two files are
+random, flat distribuions of galaxies in the same format with 10k and 100k 
+galaxies.
+
+################################################################################
+# Quick start
+################################################################################
+
+If you have been able to compile the code, you should be able to run some very 
+quick tests of the installation from the "examples" directory. 
+
+Assuming you are in the ccogs directory
+
+    cd angular_correlation/examples
+
+-------------------------
+# Compare CPU and GPU
+-------------------------
+
+To do a quick comparison of the GPU and CPU code you can type
+
+    csh compare_GPU_and_CPU.csh
+
+Both implementations will be run on the 10k files for the DR calculation. A comparison 
+of where the bins differ will be dumped to the screen after they finish running. 
+You can use the 100k files by typing
+
+    csh compare_GPU_and_CPU.csh 100
+
+but the CPU implementation may take some time to run. 
+
+-------------------------
+# Run the full 2-pt angular correlation function on the GPU
+-------------------------
+
+To run the DD, RR, and DR calculations for the 10k files on the GPU
+
+    csh run_GPU_calculation.csh
+
+To see a plot of the 2-pt ACF
+
+    csh plot_output_of_GPU_calculation.csh
+
+
+If you open any of the scripts, you will see that you can comment or uncomment
+different options to run these tests. Make sure you make similar changes in the 
+plotting script if you want to run that subsequent test.
+
+################################################################################
+# Further details about the GPU implementaion
+################################################################################
+
+
+
+################################################################################
+# Plotting utilities
+################################################################################
