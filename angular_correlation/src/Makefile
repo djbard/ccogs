@@ -30,6 +30,7 @@ LIBS              += -L$(CUDA_INSTALL_PATH)/lib64
 
 LDFLAGS := -lcudart
 
+COMMONFLAGS       := -m64
 OBJ_DIR           := ./objects/
 CXXFLAGS          := $(COMMONFLAGS)
 
