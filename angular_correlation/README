@@ -3,9 +3,45 @@
 ################################################################################
 
 This package uses the CUDA programming language to calculate the two-point
-angular correlation function on a GPU. Details about the function itself
+angular correlation function (ACF) on a GPU. Details about the function itself
 can be found in the documentation referenced in the README in the ccogs
 parent directory.
+
+
+################################################################################
+# Quick overview
+################################################################################
+
+We have compartmentalized the calculations required for the ACF by calculating
+DD, RR, and DR with separate executions of the GPU code. Each calculation must
+be called separately by the user. This gives the user the flexibility to use
+multiple machines. The final combination of these terms into the calculation
+of the ACD estimator w is currently handled by a provided python script and takes
+no time. The user can easily modify the python code (or some other utility of
+their own) to combine these terms into other estimators if they like.
+
+The code can be called with a flag to specify whether or not the input data
+is in degrees, arc minutes, or arc seconds. The ACF estimator w will be output
+in whatever units are read in. 
+
+The estimator w can be binned using evenly spaced binning, logarithmic binning,
+or logarithmic base-10 binning. We do not advocate any particular binning, but
+noted that other groups have used different binning and so opted to provide
+that flexibility.
+
+The user specifies the low-edge of the lowest bin and the bin width on the 
+command line.
+
+The number of bins is hard coded in the GPU (and accompanying C-code) code. 
+We were unable to find a way to dynamically allocate the required memory for 
+the histograms at run-time and still maintain speed. The number of bins is set
+with a define statement at the beginning of the code. It is currently set to
+254 bins. The actual array will be allocated for 256 entries with the first
+and last being used for underflow and overflow. 
+
+ ---- Remember to recompile if you change this value!!!!!!
+
+    #define DEFAULT_NBINS 254
 
 
 ################################################################################
@@ -26,6 +62,7 @@ files have 10k and 100k galaxies respectively and contain two columns listing
 the right ascension and declination for the galaxies. The other two files are
 random, flat distribuions of galaxies in the same format with 10k and 100k 
 galaxies.
+
 
 ################################################################################
 # Quick start
@@ -71,9 +108,33 @@ If you open any of the scripts, you will see that you can comment or uncomment
 different options to run these tests. Make sure you make similar changes in the 
 plotting script if you want to run that subsequent test.
 
+
 ################################################################################
 # Further details about the GPU implementaion
 ################################################################################
+
+Command line options for the GPU implementation are as follows.
+
+Usage:
+angular_correlation <flags> file0 file1 
+
+-m    Data will be read in assuming it is in arc minutes.
+-s    Data will be read in assuming it is in arc seconds.
+-l <val>   Use log-binning or not:
+           val=0: Even spaced binning.
+           val=1: Logarithmic binning.
+           val=2: Logarithmic base-10 spaced binning.
+-w <val>   Histogram bin width will be set to <val>.
+-L <val>   Low-edge of low bin of histogram will be set to <val>.
+           Note that the this low-edge, the bin-width, and the number of bins 
+           hard-coded into the routine define the histogram binning.
+-o <filename>  Output filename.
+
+file0 and file1 are the two-files used to calculate either DD, RR, or DR.
+If the two files are the same, say for DD or RR, the code knows not to double-count
+separations or self-separations.
+
+You can see some sample usage in the testing scripts in the "examples" directory.
 
 
 
