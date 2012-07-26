@@ -40,9 +40,9 @@ set tag = 'evenbinning'
 #set tag = 'log10binning'
 
 
-echo "\n#####################\n"
+echo "#####################"
 time $gpu_executable $data $flat $global_params -o GPU_"$tag"_"$ngals"k_data_flat_arcmin.dat 
-echo "\n#####################\n"
+echo "#####################"
 time $cpu_executable $data $flat $global_params -o CPU_"$tag"_"$ngals"k_data_flat_arcmin.dat 
 
 
