@@ -3,7 +3,7 @@ BIN_GALS           := mAp_gals.x
 BIN_GRID           := mAp_grid.x
 
 ### You will need to edit this line to point to your own SDK installation
-CUDA_SDK = /nfs/slac/g/ki/ki06/lsst/djbard/LSST/GPU/SDK4/
+CUDA_SDK = /path/to/my/cuda/sdk/installation
 
 ### You will need to edit this line to point to your own cuda installation
 CUDA_INSTALL_PATH := /opt/cuda

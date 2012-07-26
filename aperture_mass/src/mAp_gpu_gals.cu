@@ -16,7 +16,10 @@
 #include "cutil.h"
 
 
-///////////////////////////////////// this version calculates the aperture mass at the galaxy positions. 
+//////////////////////////////////////////////////////////////////////////  
+//this version calculates the aperture mass at the galaxy positions. 
+////////////////////////////////////////////////////////////////////////// 
+
 
 
 
@@ -24,7 +27,9 @@ void checkCUDAerror(const char *msg);
 
 int checkDeviceSpecs(int number_of_galaxies);
 
-
+/////////////////////////////////////////////////////////////////////
+//   The kernel: calculates the aperture mass, noise and SNR
+/////////////////////////////////////////////////////////////////////
 
 __global__ void mApKernel(float* rgamma1, float* rgamma2, float* ra, float* dec, float* mAp_rgamma, float* var_rgamma, float* SN_rgamma,  int tot_gals, float theta_max)
 {
@@ -33,10 +38,10 @@ __global__ void mApKernel(float* rgamma1, float* rgamma2, float* ra, float* dec,
   float this_ra = ra[idx];
   float this_dec = dec[idx];
   
-  // want to include the tails outside the halo radius to which our filter is tuned......
+  // want to include any tails outside the halo radius to which our filter is tuned......
   int kernel_radius = 1.5*theta_max;
   float ang = 0.0;
-  float xc = 0.15; // could be passed to fn
+  float xc = 0.15; // a constant of the calculation.
   float x = 0, Q = 0;
   
   float rgammaMap = 0;
@@ -55,8 +60,7 @@ __global__ void mApKernel(float* rgamma1, float* rgamma2, float* ra, float* dec,
     dist = sqrtf(radiff*radiff + decdiff*decdiff);
     if(abs(dist)>kernel_radius) continue;
     
-    // have to do something a bit complicated for teh angle - make sure it's getting the correct range. 
-    // based on Jan's get_angle(radiff, decdiff)
+    // have to do something a bit complicated for the angle - make sure it's getting the correct range. 
     if(radiff==0 && decdiff>0) ang = M_PI/2.0;
     else if(radiff==0 && decdiff<0) ang = -1.0 * M_PI/2.0;
     else if(radiff>0) ang = atanf(decdiff/radiff);
@@ -74,6 +78,7 @@ __global__ void mApKernel(float* rgamma1, float* rgamma2, float* ra, float* dec,
 
 }
   
+  // the outputs from this calculation:
   
   mAp_rgamma[idx] = rgammaMap/npoints;// got to normalise by the # gals I did the sum over. 
   var_rgamma[idx] = rgammaVar /(2*npoints*npoints); 
@@ -82,11 +87,9 @@ __global__ void mApKernel(float* rgamma1, float* rgamma2, float* ra, float* dec,
 }
 
 
-
-
-////////////////////////////////////////////////////////////////////////////////////
-//////////  ********** aperture mass for ellip ***************  ////////////////////
-////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+// setting up the aperture mass calculation
+//////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv){
   
@@ -136,11 +139,11 @@ int main(int argc, char **argv){
              
     
   // check whether the device has the capacity to do this calculation. 
+  // this is taken from the SDK function deviceQuery
   int max_threads = checkDeviceSpecs(number_of_galaxies);
 
   
   /// first, I need to test whether the device is busy. If so, it can wait a little while.
-    // of course, even when this loop finished the device may still be busy. So it goes. 
     while(1){
       size_t testsize = 1*sizeof(float); 
       float *d_test;
@@ -154,14 +157,14 @@ int main(int argc, char **argv){
     }
     
     
-    // GPU memory
+    // GPU memory for input
     float *d_rgamma1, *d_rgamma2, *d_ra, *d_dec;
     cudaMalloc(&d_rgamma1, sizeneeded);
     cudaMalloc(&d_rgamma2, sizeneeded);
     cudaMalloc(&d_ra, sizeneeded);
     cudaMalloc(&d_dec, sizeneeded);
     
-    // output_mAp vector is going to be the calculated value for each point
+    // set up vectors for host and device for output. 
     size_t sizeneeded_out = number_of_galaxies*sizeof(float);
     float *h_mAp_rgamma,*d_mAp_rgamma, *h_var_rgamma, *d_var_rgamma, *h_SN_rgamma, *d_SN_rgamma;
     
@@ -190,7 +193,7 @@ int main(int argc, char **argv){
     
     
     // set up kernel params
-    int threadsPerBlock = max_threads; // 
+    int threadsPerBlock = max_threads; 
     int blocksPerGrid = int(ceil(number_of_galaxies / float(max_threads)) ); // need nx*nx threads total
     printf(" theads per block: %d and blocks per grid: %d for a total of: %d\n", threadsPerBlock, blocksPerGrid, threadsPerBlock*blocksPerGrid);
     
@@ -227,8 +230,11 @@ int main(int argc, char **argv){
 
 
 
-//////////////////////////////////////////////////////////////////////////////////////////////////
-//simple function to check for errors. From Dr Dobbs. 
+////////////////////////////////////////////////////////
+//  simple function to check for errors. 
+/////////////////////////////////////////////////////////
+
+
 void checkCUDAerror(const char *msg)
 {
   cudaError_t err = cudaGetLastError();
@@ -242,13 +248,15 @@ void checkCUDAerror(const char *msg)
 
 
 
-//////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////
+//  function to check whether GPU device has the specs to perform the calculation. 
+//  adapted from cuda SDK deviceQuery example. 
+///////////////////////////////////////////////////////////////////////////////////////
+
 
 int checkDeviceSpecs( int number_of_galaxies){
 
-  /// what size simulation are we trying to use?
-
-  /// in case we decide to calcuate aperture mass at more points than the number of galaxies...
 
   int nxny = number_of_galaxies;
 
@@ -279,16 +287,20 @@ int checkDeviceSpecs( int number_of_galaxies){
 	   (float)deviceProp.totalGlobalMem/1048576.0f, (unsigned long long) deviceProp.totalGlobalMem);
     
     
-    printf("  Warp size:                                     %d\n", deviceProp.warpSize);
     printf("  Maximum number of threads per block:           %d\n", deviceProp.maxThreadsPerBlock);
-    printf("  Maximum sizes of each dimension of a block:    %d x %d x %d\n",
-	   deviceProp.maxThreadsDim[0],
-	   deviceProp.maxThreadsDim[1],
-	   deviceProp.maxThreadsDim[2]);
-    printf("  Maximum sizes of each dimension of a grid:     %d x %d x %d\n",
-	   deviceProp.maxGridSize[0],
-	   deviceProp.maxGridSize[1],
-	   deviceProp.maxGridSize[2]);
+
+ // you can uncomment this info if you want to know  bit more about your device specs. 
+ //Or just run devicQuery from teh SDK.    
+ //   //printf("  Warp size:                                     %d\n", deviceProp.warpSize);
+ //   printf("  Maximum sizes of each dimension of a block:    %d x %d x %d\n",
+//	   deviceProp.maxThreadsDim[0],
+//	   deviceProp.maxThreadsDim[1],
+//	   deviceProp.maxThreadsDim[2]);
+//    printf("  Maximum sizes of each dimension of a grid:     %d x %d x %d\n",
+//	   deviceProp.maxGridSize[0],
+//	   deviceProp.maxGridSize[1],
+//	   deviceProp.maxGridSize[2]);
+    
     
     
     
@@ -309,7 +321,7 @@ int checkDeviceSpecs( int number_of_galaxies){
 	int blocksPerGrid = int(ceil(nxny / threadsPerBlock)); // need nx*nx threads total
 
 	if( int(deviceProp.maxThreadsDim[1])*int(deviceProp.maxThreadsDim[2]) <blocksPerGrid) {
-	  printf("FAILURE: Not enough threads on teh device to do this calculation!\n");
+	  printf("FAILURE: Not enough threads on the device to do this calculation!\n");
 	    exit(1);
 	  }
 	else 
