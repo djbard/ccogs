@@ -2,3 +2,38 @@
 # README
 ################################################################################
 
+This suite of tools contains packages for computing cosmological quantities on
+the GPU. Details of the calculations themselves and the implementation can
+be found in the "CITING_THIS_CODE" file in this directory.
+
+Further questions about this package can be addressed to the developers:
+
+Debbie Bard
+Kavli Institute for Particle Astrophysics and Cosmology, Stanford, CA 94309
+djbard@slac.stanford.edu
+
+Matt Bellis
+Siena College, Department of Physics and Astronomy, Loudonville, NY  12210
+mbellis@siena.edu
+
+Each package has its own descriptive "README" which can be found in its
+subdirectory. In there, you can find the details of each package. 
+
+The packages in the ccogs suite are:
+
+----------------------------------------------
+# aperture_mass
+----------------------------------------------
+
+This code calculates the aperture mass map for a given dataset. In this code, 
+we use the filter proposed by Schirmer et al (2007), which is an NFW profile 
+with exponential cut-offs at zero and large radii.
+
+
+----------------------------------------------
+# angular_correlation
+----------------------------------------------
+
+This code calculates the 2-pt angular correlation function using data and
+a flat distribution of randomly generated galaxies. A particular estimator 
+is chosen, but the user has the flexibility to explore other estimators.

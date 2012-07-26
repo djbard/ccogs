@@ -4,8 +4,8 @@
 
 This package uses the CUDA programming language to calculate the two-point
 angular correlation function (ACF) on a GPU. Details about the function itself
-can be found in the documentation referenced in the README in the ccogs
-parent directory.
+can be found in the documentation referenced in the "CITING_THIS_CODE" file
+in the ccogs parent directory.
 
 
 ################################################################################
@@ -141,3 +141,23 @@ You can see some sample usage in the testing scripts in the "examples" directory
 ################################################################################
 # Plotting utilities
 ################################################################################
+
+As mentioned previously, the GPU code merely computes the DD, RR, and RR terms
+separately, as these are the most computationaly intensive portions of the 
+whole calculation. We have provided you with a script that performs the ACF
+calculation, plots the results, and dumps the ACF to a file, should you want to 
+display the plot with a different program. 
+
+We use python for this step and this script can be found under "utilities".
+
+    python plot_angular_correlation_function.py
+
+We have hard-coded the filenames with the DD,RR, and RR terms as well as the 
+number of galaxies used. You will want to edit this file when working with different
+datasets or calculations. 
+
+We have included (though sometimes commented) different formatting options
+for the plot. Details about the matplotlib python plotting library can be found
+at 
+
+http://matplotlib.sourceforge.net/
