@@ -1,0 +1,14 @@
+#########################
+## CUDA guides
+########################
+
+In developing this code, the authors have made extensive reference of the CUDA programming guide and example code made available by NVIDIA Corporation. 
+In particular, we use parts of the NVIDIA device_query code to obtain information about the GPU card. 
+
+We have also used the Dr Dobbs supercomputing blog as a useful resource, and the error checking function we include in this code is adapted from code given on that site. 
+
+##########################
+## Sample data
+##########################
+
+The authors would also like to thank Risa Wechsler and Jan Kratochvil for allowing use of their simulated data as test data.  
