@@ -12,7 +12,7 @@
 # INSTALL_DIR is where the CUDA and C executables will be installed. You may find it 
 # useful to install in some system-wide directory (e.g. /usr/local/bin, 
 # $(HOME)/bin, etc.).
-INSTALL_DIR       := ../bin/
+INSTALL_DIR       := ./
 
 BIN_GRID           := $(INSTALL_DIR)/mAp_grid.x
 
