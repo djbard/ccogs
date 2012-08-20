@@ -86,7 +86,7 @@ float tempdec = idx - grid_size*tempra;
   // the outputs from this calculation:
   
   mAp_rgamma[idx] = rgammaMap/npoints;// got to normalise by the # gals I did the sum over. 
-  var_rgamma[idx] = rgammaVar /(2*npoints*npoints); 
+  var_rgamma[idx] = rgammaVar /(2.0*npoints*npoints); 
   SN_rgamma[idx] = sqrtf(2) * rgammaMap / sqrtf(rgammaVar);
 }
 
