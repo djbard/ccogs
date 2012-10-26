@@ -243,9 +243,10 @@ int main(int argc, char **argv)
 
     for(int i=0; i<NUM_GALAXIES; i++)
     {
-        fscanf(infile0, "%f %f", &temp0, &temp1);
+        fscanf(infile0, "%lf %lf", &temp0, &temp1);
         h_alpha0[i] = temp0/scale_factor;
         h_delta0[i] = temp1/scale_factor;
+        //printf("%e %e\n", temp0, temp1);
         //fscanf(infile0, "%f %f", &h_alpha0[i]*scale_factor, &h_delta0[i]*scale_factor);
         //if (i<10)
         //printf("%e %e\n", h_alpha0[i], h_delta0[i]);
@@ -264,7 +265,7 @@ int main(int argc, char **argv)
 
     for(int i=0; i<NUM_GALAXIES; i++)
     {
-        fscanf(infile1, "%f %f", &temp0, &temp1);
+        fscanf(infile1, "%lf %lf", &temp0, &temp1);
         h_alpha1[i] = temp0/scale_factor;
         h_delta1[i] = temp1/scale_factor;
         //fscanf(infile1, "%f %f", &h_alpha1[i]*scale_factor, &h_delta1[i]*scale_factor);
