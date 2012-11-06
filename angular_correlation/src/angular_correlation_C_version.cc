@@ -230,18 +230,19 @@ int main(int argc, char **argv)
     // Read in the first file
     ////////////////////////////////////////////////////////////////////////////
 
-    int NUM_GALAXIES;
+    int NUM_GALAXIES0;
+    int NUM_GALAXIES1;
     //fscanf(infile0, "%s %s %s", &axis_titles, &dummy, &axis_titles);
-    fscanf(infile0, "%d", &NUM_GALAXIES);
+    fscanf(infile0, "%d", &NUM_GALAXIES0);
 
-    int size_of_galaxy_array = NUM_GALAXIES * sizeof(float);    
-    printf("SIZE 0 # GALAXIES: %d\n",NUM_GALAXIES);
+    int size_of_galaxy_array = NUM_GALAXIES0 * sizeof(float);    
+    printf("SIZE 0 # GALAXIES: %d\n",NUM_GALAXIES0);
 
     h_alpha0 = (float*)malloc(size_of_galaxy_array);
     h_delta0 = (float*)malloc(size_of_galaxy_array);
     float temp0, temp1;
 
-    for(int i=0; i<NUM_GALAXIES; i++)
+    for(int i=0; i<NUM_GALAXIES0; i++)
     {
         fscanf(infile0, "%f %f", &temp0, &temp1);
         h_alpha0[i] = temp0/scale_factor;
@@ -256,13 +257,14 @@ int main(int argc, char **argv)
     ////////////////////////////////////////////////////////////////////////////
 
     //fscanf(infile1, "%s %s %s", &axis_titles, &dummy, &axis_titles);
-    fscanf(infile1, "%d", &NUM_GALAXIES);
-    printf("SIZE 1 # GALAXIES: %d\n",NUM_GALAXIES);
+    fscanf(infile1, "%d", &NUM_GALAXIES1);
+    printf("SIZE 1 # GALAXIES: %d\n",NUM_GALAXIES1);
 
+    size_of_galaxy_array = NUM_GALAXIES1 * sizeof(float);    
     h_alpha1 = (float*)malloc(size_of_galaxy_array);
     h_delta1 = (float*)malloc(size_of_galaxy_array);
 
-    for(int i=0; i<NUM_GALAXIES; i++)
+    for(int i=0; i<NUM_GALAXIES1; i++)
     {
         fscanf(infile1, "%f %f", &temp0, &temp1);
         h_alpha1[i] = temp0/scale_factor;
@@ -330,14 +332,14 @@ int main(int argc, char **argv)
     float dist = 0;
 
     int bin_index = 0;
-    for(int i = 0; i < NUM_GALAXIES; i++)
+    for(int i = 0; i < NUM_GALAXIES0; i++)
     {
         if (i%1000==0)
         {
             printf("%d\n",i);
         }
 
-        for(int j = 0; j < NUM_GALAXIES; j++)
+        for(int j = 0; j < NUM_GALAXIES1; j++)
         {
             //printf("----\n");
             //printf("%d %d\t\t%d %d\n",k,y,j,x);
