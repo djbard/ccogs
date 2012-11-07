@@ -171,11 +171,12 @@ int main(int argc, char **argv)
     float scale_factor = 1.0; // For if we need to convert input to arcsec or arcmin
     float conv_factor_angle = 57.2957795; // 180/pi // For if we need to convert arcdistance to arcsec or arcmin
 
+    bool silent_on_GPU_testing = false;
+
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
 
-
-    while ((c = getopt(argc, argv, "ao:L:l:w:sm")) != -1) {
+    while ((c = getopt(argc, argv, "ao:L:l:w:smS")) != -1) {
         switch(c) {
             case 'L':
                 printf("L is set\n");
@@ -206,6 +207,10 @@ int main(int argc, char **argv)
             case 'o':
                 outfilename = optarg;
                 printf("Output filename is %s\n", outfilename);
+                break;
+            case 'S':
+                printf("Silent mode - don't run the GPU test (suppresses some output)");
+                silent_on_GPU_testing = true;
                 break;
             case '?':
                 printf("unknown arg %c\n", optopt);
@@ -283,80 +288,83 @@ int main(int argc, char **argv)
     ////////////////////////////////////////////////////////////////////////////
     // Now get the info from the device.
     ////////////////////////////////////////////////////////////////////////////
-    printf("\n------ CUDA device diagnostics ------\n\n");
+    if (!silent_on_GPU_testing)
+    {
+        printf("\n------ CUDA device diagnostics ------\n\n");
 
-    int tot_gals = 100000;
-    int nx = SUBMATRIX_SIZE;
-    int ncalc = nx * nx;
-    int gpu_mem_needed = int(tot_gals * sizeof(float)) * 5; // need to allocate gamma1, gamma2, ra, dec and output.
-    printf("Requirements: %d calculations and %d bytes memory on the GPU \n\n", ncalc, gpu_mem_needed);
+        int tot_gals = 100000;
+        int nx = SUBMATRIX_SIZE;
+        int ncalc = nx * nx;
+        int gpu_mem_needed = int(tot_gals * sizeof(float)) * 2; // need to allocate ra, dec.
+        printf("Requirements: %d calculations and %d bytes memory on the GPU \n\n", ncalc, gpu_mem_needed);
 
-    int deviceCount = 0;
-    cudaError_t error_id = cudaGetDeviceCount(&deviceCount);
-    if (error_id != cudaSuccess) {
-        printf( "cudaGetDeviceCount returned %d\n-> %s\n", (int)error_id, cudaGetErrorString(error_id) );
-    }
-    // This function call returns 0 if there are no CUDA capable devices.
-    if (deviceCount == 0)
-        printf("There is no device supporting CUDA\n");
-    else
-        printf("Found %d CUDA Capable device(s)\n", deviceCount);
-
-
-    int dev=0;
-    for (dev = 0; dev < deviceCount; ++dev) {
-        cudaDeviceProp deviceProp;
-        cudaGetDeviceProperties(&deviceProp, dev);
-        printf("\nDevice %d: \"%s\"\n", dev, deviceProp.name);
-
-        printf("  Total amount of global memory:                 %.0f MBytes (%llu bytes)\n",
-                (float)deviceProp.totalGlobalMem/1048576.0f, (unsigned long long) deviceProp.totalGlobalMem);
-
-
-        printf("  Warp size:                                     %d\n", deviceProp.warpSize);
-        printf("  Maximum number of threads per block:           %d\n", deviceProp.maxThreadsPerBlock);
-        printf("  Maximum sizes of each dimension of a block:    %d x %d x %d\n",
-                deviceProp.maxThreadsDim[0],
-                deviceProp.maxThreadsDim[1],
-                deviceProp.maxThreadsDim[2]);
-        printf("  Maximum sizes of each dimension of a grid:     %d x %d x %d\n",
-                deviceProp.maxGridSize[0],
-                deviceProp.maxGridSize[1],
-                deviceProp.maxGridSize[2]);
-
-        // does this device have enough capcacity for the calculation?
-        printf("\n*************\n");
-
-        // check memory
-        if((unsigned long long) deviceProp.totalGlobalMem < gpu_mem_needed) printf(" FAILURE: Not eneough memeory on device for this calculation! \n");
+        int deviceCount = 0;
+        cudaError_t error_id = cudaGetDeviceCount(&deviceCount);
+        if (error_id != cudaSuccess) {
+            printf( "cudaGetDeviceCount returned %d\n-> %s\n", (int)error_id, cudaGetErrorString(error_id) );
+        }
+        // This function call returns 0 if there are no CUDA capable devices.
+        if (deviceCount == 0)
+            printf("There is no device supporting CUDA\n");
         else
-        {
-            printf("Hurrah! This device has enough memory to perform this calculation\n");
+            printf("Found %d CUDA Capable device(s)\n", deviceCount);
 
-            // check # threads
 
-            int threadsPerBlock = deviceProp.maxThreadsPerBlock; // maximal efficiency exists if we use max # threads per block.
-            int blocksPerGrid = int(ceil(ncalc / threadsPerBlock)); // need nx*nx threads total
-            if(deviceProp.maxThreadsDim[0] >blocksPerGrid) printf("FAILURE: Not enough threads on the device to do this calculation!\n");
+        int dev=0;
+        for (dev = 0; dev < deviceCount; ++dev) {
+            cudaDeviceProp deviceProp;
+            cudaGetDeviceProperties(&deviceProp, dev);
+            printf("\nDevice %d: \"%s\"\n", dev, deviceProp.name);
+
+            printf("  Total amount of global memory:                 %.0f MBytes (%llu bytes)\n",
+                    (float)deviceProp.totalGlobalMem/1048576.0f, (unsigned long long) deviceProp.totalGlobalMem);
+
+
+            printf("  Warp size:                                     %d\n", deviceProp.warpSize);
+            printf("  Maximum number of threads per block:           %d\n", deviceProp.maxThreadsPerBlock);
+            printf("  Maximum sizes of each dimension of a block:    %d x %d x %d\n",
+                    deviceProp.maxThreadsDim[0],
+                    deviceProp.maxThreadsDim[1],
+                    deviceProp.maxThreadsDim[2]);
+            printf("  Maximum sizes of each dimension of a grid:     %d x %d x %d\n",
+                    deviceProp.maxGridSize[0],
+                    deviceProp.maxGridSize[1],
+                    deviceProp.maxGridSize[2]);
+
+            // does this device have enough capcacity for the calculation?
+            printf("\n*************\n");
+
+            // check memory
+            if((unsigned long long) deviceProp.totalGlobalMem < gpu_mem_needed) printf(" FAILURE: Not eneough memeory on device for this calculation! \n");
             else
             {
-                printf("Hurrah! This device supports enough threads to do this calculation\n");
-                // how many kernels can we run at once on this machine?
-                int n_mem = floor(deviceProp.totalGlobalMem / float(gpu_mem_needed));
-                int n_threads = floor(threadsPerBlock * deviceProp.maxThreadsDim[0]*deviceProp.maxThreadsDim[1] / float(ncalc) ); // max # threads possible?
+                printf("Hurrah! This device has enough memory to perform this calculation\n");
 
-                printf("%d %d  \n",  n_threads, deviceProp.maxThreadsDim[0]);
+                // check # threads
 
-                int max_kernels = 0;
-                n_mem<n_threads ? max_kernels = n_mem : max_kernels = n_threads;
+                int threadsPerBlock = deviceProp.maxThreadsPerBlock; // maximal efficiency exists if we use max # threads per block.
+                int blocksPerGrid = int(ceil(ncalc / threadsPerBlock)); // need nx*nx threads total
+                if(deviceProp.maxThreadsDim[0] >blocksPerGrid) printf("FAILURE: Not enough threads on the device to do this calculation!\n");
+                else
+                {
+                    printf("Hurrah! This device supports enough threads to do this calculation\n");
+                    // how many kernels can we run at once on this machine?
+                    int n_mem = floor(deviceProp.totalGlobalMem / float(gpu_mem_needed));
+                    int n_threads = floor(threadsPerBlock * deviceProp.maxThreadsDim[0]*deviceProp.maxThreadsDim[1] / float(ncalc) ); // max # threads possible?
 
-                printf(" you can run %d kernels at a time on this device without overloading the resources \n", max_kernels);
+                    printf("%d %d  \n",  n_threads, deviceProp.maxThreadsDim[0]);
+
+                    int max_kernels = 0;
+                    n_mem<n_threads ? max_kernels = n_mem : max_kernels = n_threads;
+
+                    printf(" you can run %d kernels at a time on this device without overloading the resources \n", max_kernels);
+                }
             }
+
         }
 
+        printf("\n------ End CUDA device diagnostics ------\n\n");
     }
-
-    printf("\n------ End CUDA device diagnostics ------\n\n");
     ////////////////////////////////////////////////////////////////////////////
 
     float *d_alpha0, *d_delta0;
@@ -365,7 +373,8 @@ int main(int argc, char **argv)
     float *d_alpha1, *d_delta1;
     float *h_alpha1, *h_delta1;
 
-    int NUM_GALAXIES;
+    int NUM_GALAXIES0;
+    int NUM_GALAXIES1;
 
     //////////////////////////////////////////////////////////////////////
     // Read in the galaxy files.
@@ -373,16 +382,16 @@ int main(int argc, char **argv)
     // Read in the first file
     ////////////////////////////////////////////////////////////////////////////
 
-    fscanf(infile0, "%d", &NUM_GALAXIES);
+    fscanf(infile0, "%d", &NUM_GALAXIES0);
 
-    int size_of_galaxy_array = NUM_GALAXIES * sizeof(float);    
-    printf("SIZE 0 # GALAXIES: %d\n",NUM_GALAXIES);
+    int size_of_galaxy_array0 = NUM_GALAXIES0 * sizeof(float);    
+    printf("SIZE 0 # GALAXIES: %d\n",NUM_GALAXIES0);
 
-    h_alpha0 = (float*)malloc(size_of_galaxy_array);
-    h_delta0 = (float*)malloc(size_of_galaxy_array);
+    h_alpha0 = (float*)malloc(size_of_galaxy_array0);
+    h_delta0 = (float*)malloc(size_of_galaxy_array0);
     float temp0, temp1;
 
-    for(int i=0; i<NUM_GALAXIES; i++)
+    for(int i=0; i<NUM_GALAXIES0; i++)
     {
         fscanf(infile0, "%f %f", &temp0, &temp1);
         h_alpha0[i] = temp0/scale_factor;
@@ -395,13 +404,15 @@ int main(int argc, char **argv)
     // Read in the second file
     ////////////////////////////////////////////////////////////////////////////
 
-    fscanf(infile1, "%d", &NUM_GALAXIES);
-    printf("SIZE 1 # GALAXIES: %d\n",NUM_GALAXIES);
+    fscanf(infile1, "%d", &NUM_GALAXIES1);
 
-    h_alpha1 = (float*)malloc(size_of_galaxy_array);
-    h_delta1 = (float*)malloc(size_of_galaxy_array);
+    int size_of_galaxy_array1 = NUM_GALAXIES1 * sizeof(float);    
+    printf("SIZE 1 # GALAXIES: %d\n",NUM_GALAXIES1);
 
-    for(int i=0; i<NUM_GALAXIES; i++)
+    h_alpha1 = (float*)malloc(size_of_galaxy_array1);
+    h_delta1 = (float*)malloc(size_of_galaxy_array1);
+
+    for(int i=0; i<NUM_GALAXIES1; i++)
     {
         fscanf(infile1, "%f %f", &temp0, &temp1);
         h_alpha1[i] = temp0/scale_factor;
@@ -445,11 +456,11 @@ int main(int argc, char **argv)
     // SUBMATRIX is the number of threads per warp? Per kernel call?
     ////////////////////////////////////////////////////////////////////////////
 
-    cudaMalloc((void **) &d_alpha0, size_of_galaxy_array );
-    cudaMalloc((void **) &d_delta0, size_of_galaxy_array );
+    cudaMalloc((void **) &d_alpha0, size_of_galaxy_array0 );
+    cudaMalloc((void **) &d_delta0, size_of_galaxy_array0 );
 
-    cudaMalloc((void **) &d_alpha1, size_of_galaxy_array );
-    cudaMalloc((void **) &d_delta1, size_of_galaxy_array );
+    cudaMalloc((void **) &d_alpha1, size_of_galaxy_array1 );
+    cudaMalloc((void **) &d_delta1, size_of_galaxy_array1 );
 
     // Check to see if we allocated enough memory.
     if (0==d_alpha0 || 0==d_delta0 || 0==d_alpha1 || 0==d_delta1 || 0==dev_hist)
@@ -459,40 +470,42 @@ int main(int argc, char **argv)
     }
 
     // Initialize array to all 0's
-    cudaMemset(d_alpha0,0,size_of_galaxy_array);
-    cudaMemset(d_delta0,0,size_of_galaxy_array);
-    cudaMemset(d_alpha1,0,size_of_galaxy_array);
-    cudaMemset(d_delta1,0,size_of_galaxy_array);
+    cudaMemset(d_alpha0,0,size_of_galaxy_array0);
+    cudaMemset(d_delta0,0,size_of_galaxy_array0);
+    cudaMemset(d_alpha1,0,size_of_galaxy_array1);
+    cudaMemset(d_delta1,0,size_of_galaxy_array1);
 
-    cudaMemcpy(d_alpha0, h_alpha0, size_of_galaxy_array, cudaMemcpyHostToDevice );
-    cudaMemcpy(d_delta0, h_delta0, size_of_galaxy_array, cudaMemcpyHostToDevice );
-    cudaMemcpy(d_alpha1, h_alpha1, size_of_galaxy_array, cudaMemcpyHostToDevice );
-    cudaMemcpy(d_delta1, h_delta1, size_of_galaxy_array, cudaMemcpyHostToDevice );
+    cudaMemcpy(d_alpha0, h_alpha0, size_of_galaxy_array0, cudaMemcpyHostToDevice );
+    cudaMemcpy(d_delta0, h_delta0, size_of_galaxy_array0, cudaMemcpyHostToDevice );
+    cudaMemcpy(d_alpha1, h_alpha1, size_of_galaxy_array1, cudaMemcpyHostToDevice );
+    cudaMemcpy(d_delta1, h_delta1, size_of_galaxy_array1, cudaMemcpyHostToDevice );
 
     int x, y;
-    int num_submatrices = NUM_GALAXIES / SUBMATRIX_SIZE;
-
+    int num_submatrices_x = NUM_GALAXIES0 / SUBMATRIX_SIZE;
+    int num_submatrices_y = NUM_GALAXIES1 / SUBMATRIX_SIZE;
     // Take care of edges of matrix.
-    if (NUM_GALAXIES%SUBMATRIX_SIZE != 0)
+    if (NUM_GALAXIES0%SUBMATRIX_SIZE != 0)
     {
-        num_submatrices += 1;
-        //SUBMATRIX_SIZE = NUM_GALAXIES;
+        num_submatrices_x += 1;
+    }
+    if (NUM_GALAXIES1%SUBMATRIX_SIZE != 0)
+    {
+        num_submatrices_y += 1;
     }
 
 
     printf("Breaking down the calculations.\n");
-    printf("Number of submatrices: %dx%d\n",num_submatrices,num_submatrices);
+    printf("Number of submatrices: %dx%d\n",num_submatrices_x,num_submatrices_y);
     printf("Number of calculations per submatrices: %dx%d\n",SUBMATRIX_SIZE,SUBMATRIX_SIZE);
 
-
     int bin_index = 0;
-    for(int k = 0; k < num_submatrices; k++)
+    for(int k = 0; k < num_submatrices_y; k++)
     {
         y = k*SUBMATRIX_SIZE;
         //printf("%d %d\n",k,y);
-        for(int j = 0; j < num_submatrices; j++)
+        for(int j = 0; j < num_submatrices_x; j++)
         {
-            x = j *SUBMATRIX_SIZE; 
+            x = j*SUBMATRIX_SIZE; 
 
             //printf("----\n");
             //printf("%d %d\t\t%d %d\n",k,y,j,x);
@@ -501,8 +514,8 @@ int main(int argc, char **argv)
             // Set the histogram to all zeros each time.
             cudaMemset(dev_hist,0,size_hist_bytes);
 
-            int max_x = NUM_GALAXIES;
-            int max_y = NUM_GALAXIES;
+            int max_x = NUM_GALAXIES0;
+            int max_y = NUM_GALAXIES1;
 
             distance<<<grid,block>>>(d_alpha0, d_delta0,d_alpha1, d_delta1, x, y, max_x, max_y, dev_hist, hist_lower_range, hist_upper_range, nbins, hist_bin_width, log_binning_flag, two_different_files,conv_factor_angle);
             cudaMemcpy(hist, dev_hist, size_hist_bytes, cudaMemcpyDeviceToHost);

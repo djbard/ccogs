@@ -17,8 +17,8 @@ set data = '../sample_data/data_'$ngals'k_arcmin.dat'
 # Bin width of 1.0 (-w 1.0)
 # Low-edge of 1st bin is 1 arg min. (-L 1.00)
 ################################################################################
-set global_params = '-w 1.0 -L 1.00 -l 0 -m'
-set tag = 'evenbinning_GPU'
+#set global_params = '-w 1.0 -L 1.00 -l 0 -m'
+#set tag = 'evenbinning_GPU'
 
 ################################################################################
 # Read in data assuming arc minutes. (-m)
@@ -35,8 +35,8 @@ set tag = 'evenbinning_GPU'
 # Bin width of 0.02 (-w 0.02)
 # Low-edge of 1st bin is 1 arg min. (-L 1.00)
 ################################################################################
-#set global_params = '-w 0.02 -L 1.00 -l 2 -m'
-#set tag = 'log10binning_GPU'
+set global_params = '-w 0.02 -L 1.00 -l 2 -m'
+set tag = 'log10binning_GPU'
 
 
 echo "#####################"

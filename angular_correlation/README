@@ -128,6 +128,7 @@ angular_correlation <flags> file0 file1
 -L <val>   Low-edge of low bin of histogram will be set to <val>.
            Note that the this low-edge, the bin-width, and the number of bins 
            hard-coded into the routine define the histogram binning.
+-S         Silent output for the GPU diagnostic info.
 -o <filename>  Output filename.
 
 file0 and file1 are the two-files used to calculate either DD, RR, or DR.
