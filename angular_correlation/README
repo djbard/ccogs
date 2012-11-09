@@ -120,6 +120,7 @@ angular_correlation <flags> file0 file1
 
 -m    Data will be read in assuming it is in arc minutes.
 -s    Data will be read in assuming it is in arc seconds.
+-p    Data will be read in assuming it is in [x,y,z] co-ordinates, in Mpc.
 -l <val>   Use log-binning or not:
            val=0: Even spaced binning.
            val=1: Logarithmic binning.
@@ -162,3 +163,5 @@ for the plot. Details about the matplotlib python plotting library can be found
 at 
 
 http://matplotlib.sourceforge.net/
+
+We have also included a file convertRADECZ_XYZ.py, which will read in an input file that contains the ra, dec and redshift for each object, and will convert it to cartesian x,y,z coordinates in Mpc. Redshift is converted to Mpc based on Lamnda CDM cosmology (not validated at high redshift).  
