@@ -30,7 +30,7 @@ LIBS              += -L$(CUDA_INSTALL_PATH)/lib64
 
 LDFLAGS := -lcudart
 
-COMMONFLAGS       := -m64
+COMMONFLAGS       := -m64 
 OBJ_DIR           := ./objects/
 CXXFLAGS          := $(COMMONFLAGS)
 
@@ -56,6 +56,7 @@ $(OBJ_DIR)/3pcf.cu_o : 3pcf.cu
 3pcf_C_version : 3pcf_C_version.cc
 	mkdir -p $(INSTALL_DIR)
 	$(CC) -O1 -o $(INSTALL_DIR)/$@ $@.cc
+	#$(CC) -pg -O1 -o $(INSTALL_DIR)/$@ $@.cc
 
 clean:
 	rm -f $(INSTALL_DIR)/3pcf_C_version 
