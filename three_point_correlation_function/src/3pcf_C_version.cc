@@ -6,53 +6,122 @@
 
 using namespace std;
 
-#define SUBMATRIX_SIZE 10000
-//#define NUM_BIN 5000
-//#define HIST_MIN 0.0
-//#define HIST_MAX 3.5 
-//#define NUM_BIN 27 // for log binning
-//#define NUM_BIN 37 // for log binning
 #define HIST_MIN 0.0 // for degrees
 #define HIST_MAX 100.0 // for degrees
 
-#define DEFAULT_NBINS 254 // for log binning
+#define DEFAULT_NBINS 10 // for log binning
 //#define DEFAULT_NBINS 126 // for log binning
 //#define DEFAULT_NBINS 62 // for log binning
 
 #define CONV_FACTOR 57.2957795 // 180/pi
 
+int distance_to_bin(float dist, float hist_min, float hist_max, int nbins, float bin_width, int flag)
+{
+    int bin_index = 0;
+
+    if(dist < hist_min)
+        bin_index = 0;
+    else if(dist >= hist_max)
+        bin_index = nbins + 1;
+    else
+    {
+        if (flag==0)
+        {
+            //printf("%f %f %f\n",dist,hist_min,bin_width);
+            bin_index = int((dist-hist_min)/bin_width) + 1;
+            //printf("here! %d\n",bin_index);
+        }
+        else if (flag==1)// log binning
+        {
+            bin_index = int((log(dist)-log(hist_min))/bin_width) + 1;
+        }
+        else if (flag==2)// log 10 binning
+        {
+            bin_index = int((log10(dist)-log10(hist_min))/bin_width) + 1;
+        }
+    }
+
+    return bin_index;
+}
+
 ////////////////////////////////////////////////////////////////////////
-float distance(float a0, float d0, float a1, float d1,float conv_factor_angle) 
+int distance(float x0, float y0, float z0, float x1, float y1, float z1,float x2, float y2, float z2, float hist_min, float hist_max, int nbins, float bin_width, int flag)
 {
 
-    float alpha = a0, delta0 = d0;
-    float cos_d0 = cos(delta0), sin_d0 = sin(delta0), dist;
+    float xdiff = x0-x1;
+    float ydiff = y0-y1;
+    float zdiff = z0-z1;
+    float dist0 = sqrt(xdiff*xdiff + ydiff*ydiff + zdiff*zdiff);
 
-    float a_diff, sin_a_diff, cos_a_diff;
-    float cos_d1, sin_d1, numer, denom, mult1, mult2;    
+    xdiff = x0-x2;
+    ydiff = y0-y2;
+    zdiff = z0-z2;
+    float dist1 = sqrt(xdiff*xdiff + ydiff*ydiff + zdiff*zdiff);
 
-    a_diff = a1 - alpha;
+    xdiff = x1-x2;
+    ydiff = y1-y2;
+    zdiff = z1-z2;
+    float dist2 = sqrt(xdiff*xdiff + ydiff*ydiff + zdiff*zdiff);
 
-    sin_a_diff = sin(a_diff);
-    cos_a_diff = cos(a_diff);
+    //printf("%f %f %f\t",x0,x1,x2);
+    //printf("%f %f %f\t",y0,y1,y2);
+    //printf("%f %f %f\t",z0,z1,z2);
+    //printf("%f %f %f\n",dist0,dist1,dist2);
 
-    sin_d1 = sin(d1);
-    cos_d1 = cos(d1);
+    // Sort the distances
+    bool b0 = dist0<dist1;
+    bool b1 = dist1<dist2;
+    bool b2 = dist0<dist2;
 
-    mult1 = cos_d1 * cos_d1 * sin_a_diff * sin_a_diff;
-    mult2 = cos_d0 * sin_d1 - sin_d0 * cos_d1 * cos_a_diff;
-    mult2 = mult2 * mult2;
+    int i0=-1; // shortest
+    int i1=-1; // middle
+    int i2=-1; // longest
 
-    numer = sqrt(mult1 + mult2); 
+    if (b0==true && b1==true)
+    {
+        i0 = distance_to_bin(dist0,hist_min,hist_max,nbins,bin_width,flag);
+        i1 = distance_to_bin(dist1,hist_min,hist_max,nbins,bin_width,flag);
+        i2 = distance_to_bin(dist2,hist_min,hist_max,nbins,bin_width,flag);
+    }
+    else if (b0==false && b1==false)
+    {
+        i0 = distance_to_bin(dist2,hist_min,hist_max,nbins,bin_width,flag);
+        i1 = distance_to_bin(dist1,hist_min,hist_max,nbins,bin_width,flag);
+        i2 = distance_to_bin(dist0,hist_min,hist_max,nbins,bin_width,flag);
+    }
+    else if (b0==true && b1==false && b2==true)
+    {
+        i0 = distance_to_bin(dist0,hist_min,hist_max,nbins,bin_width,flag);
+        i1 = distance_to_bin(dist2,hist_min,hist_max,nbins,bin_width,flag);
+        i2 = distance_to_bin(dist1,hist_min,hist_max,nbins,bin_width,flag);
+    }
+    else if (b0==false && b1==true && b2==true)
+    {
+        i0 = distance_to_bin(dist1,hist_min,hist_max,nbins,bin_width,flag);
+        i1 = distance_to_bin(dist0,hist_min,hist_max,nbins,bin_width,flag);
+        i2 = distance_to_bin(dist2,hist_min,hist_max,nbins,bin_width,flag);
+    }
+    else if (b0==true && b1==false && b2==false)
+    {
+        i0 = distance_to_bin(dist2,hist_min,hist_max,nbins,bin_width,flag);
+        i1 = distance_to_bin(dist0,hist_min,hist_max,nbins,bin_width,flag);
+        i2 = distance_to_bin(dist1,hist_min,hist_max,nbins,bin_width,flag);
+    }
+    else if (b0==false && b1==true && b2==false)
+    {
+        i0 = distance_to_bin(dist2,hist_min,hist_max,nbins,bin_width,flag);
+        i1 = distance_to_bin(dist1,hist_min,hist_max,nbins,bin_width,flag);
+        i2 = distance_to_bin(dist0,hist_min,hist_max,nbins,bin_width,flag);
+    }
+    
+    //printf("%d %d %d\n",i0,i1,i2);
 
-    denom = sin_d0 *sin_d1 + cos_d0 * cos_d1 * cos_a_diff;
+    // Combine for big 1d rep of 3d histogram;
+    int nhistbins = nbins+2;
+    int nhistbins2 = nhistbins*nhistbins;
+    int totbin = nhistbins2*i2 + nhistbins*i1 + i0;
 
-    //dist = atan(num);  
-    dist = atan2(numer,denom);  
-    dist *= conv_factor_angle;  // Convert to degrees
-
-    return dist;
-
+    return totbin;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -73,12 +142,17 @@ int main(int argc, char **argv)
 
     float hist_lower_range = 0.0000001;
     float hist_upper_range = 0;
-    int nbins = DEFAULT_NBINS;
     float hist_bin_width = 0.05;
     int log_binning_flag = 0; // False
 
     float scale_factor = 1.0; // For if we need to convert input to arcsec or arcmin
     float conv_factor_angle = 57.2957795; // 180/pi // For if we need to convert arcdistance to arcsec or arcmin
+
+    float hist_min = 0;
+    float hist_max = 1.8;
+    int nbins = DEFAULT_NBINS;
+    float bin_width = (hist_max-hist_min)/nbins;
+    int flag = 0;
 
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
@@ -231,8 +305,10 @@ int main(int argc, char **argv)
             h_x[i][j] = temp0/scale_factor;
             h_y[i][j] = temp1/scale_factor;
             h_z[i][j] = temp2/scale_factor;
+            /*
             if (i<10)
                 printf("%e %e %e\n", h_x[i][j],h_y[i][j],h_z[i][j]);
+            */
         }
     }
 
@@ -240,15 +316,11 @@ int main(int argc, char **argv)
     // Allocation of histograms.
     ///////////////////////////////////////////////////////////////////////////
 
-    /*
     unsigned long *hist;
-    float hist_min = hist_lower_range;
-    float hist_max = hist_upper_range;
     //int nbins;
-    float bin_width = hist_bin_width;
-    int log_binning=log_binning_flag;
+    int log_binning=flag;
 
-    int size_hist = (nbins+2);
+    int size_hist = (nbins+2)*(nbins+2)*(nbins+2);
     int size_hist_bytes = size_hist*sizeof(unsigned long);
 
     hist = (unsigned long*)malloc(size_hist_bytes);
@@ -258,96 +330,97 @@ int main(int argc, char **argv)
     float dist = 0;
 
     int bin_index = 0;
-    for(int i = 0; i < NUM_GALAXIES0; i++)
+    for(int i = 0; i < NUM_GALAXIES[0]; i++)
     {
-        if (i%1000==0)
+        if (i%10==0)
         {
             printf("%d\n",i);
         }
 
-        for(int j = 0; j < NUM_GALAXIES1; j++)
+        for(int j = i+1; j < NUM_GALAXIES[1]; j++)
         {
-            //printf("----\n");
-            //printf("%d %d\t\t%d %d\n",k,y,j,x);
-            //printf("----\n");
-
-
-            bool do_calc = 1;
-            if (which_three_input_files)
+            for(int k = j+1; k < NUM_GALAXIES[2]; k++)
             {
-                do_calc = 1;
-            }
-            else // Doing the same file
-            {
-                if(i > j)
-                    do_calc=1;
-                else
-                    do_calc=0;
-            }
+                bool do_calc = 1;
+                //if (which_three_input_files)
+                //{
+                    //do_calc = 1;
+                //}
+                //else // Doing the same file
+                //{
+                    //if(i > j)
+                        //do_calc=1;
+                    //else
+                        //do_calc=0;
+                //}
 
-            if (do_calc)
-            {
-                dist = distance(h_alpha0[i],h_delta0[i],h_alpha1[j],h_delta1[j],conv_factor_angle);
-
-                if(dist < hist_min)
-                    bin_index = 0;
-                else if(dist >= hist_max)
-                    bin_index = nbins + 1;
-                else
+                if (do_calc)
                 {
-                    if (log_binning==0)
-                    {
-                        bin_index = int((dist-hist_min)/bin_width) + 1;
-                    }
-                    else if (log_binning==1)// log binning
-                    {
-                        bin_index = int((log(dist)-log(hist_min))/bin_width) + 1;
-                    }
-                    else if (log_binning==2)// log 10 binning
-                    {
-                        bin_index = int((log10(dist)-log10(hist_min))/bin_width) + 1;
-                    }
+                    bin_index = distance(h_x[0][i],h_y[0][i],h_z[0][i], \
+                                         h_x[1][j],h_y[1][j],h_z[1][j], \
+                                         h_x[2][k],h_y[2][k],h_z[2][k], \
+                                         hist_min, hist_max, nbins, bin_width, flag);
+
+                    //printf("%d\n",bin_index);
+                    hist[bin_index]++;
                 }
-
-
-                hist[bin_index]++;
             }
         }
     }  
 
+    int index = 0;
     unsigned long total = 0;
-    float bins_mid = 0;
-
-    float lo = hist_lower_range;
-    float hi = 0;
-    for(int k=0; k<nbins+1; k++)
+    for(int i = 0; i < nbins+2; i++)
     {
-        if (k==0)
+        printf("%d --------------\n",i);
+        for(int j = 0; j < nbins+2; j++)
         {
-            //fprintf(outfile, "Underflow below %.3e %s %lu \n", lo, ",",  hist[k]);
-        }
-        else
-        {
-            if (log_binning_flag==0)
+            for(int k = 0; k < nbins+2; k++)
             {
-                hi = lo + hist_bin_width;
-            }
-            else if (log_binning_flag==1)
-            {
-                //printf("lo: %f\t\tlog(lo): %f\n",lo,log(lo));
-                hi = exp(log(lo) + hist_bin_width);
-            }
-            else if (log_binning_flag==2)
-            {
-                //printf("lo: %f\t\tlog10(lo): %f\n",lo,log10(lo));
-                hi = pow(10,(log10(lo) + hist_bin_width));
-            }
 
-            fprintf(outfile, "%.3e %.3e %lu \n",lo,hi,hist[k]);
-            total += hist[k];
-
-            lo = hi;
+                index = (nbins+2)*(nbins+2)*k + (nbins+2)*j + i; 
+                printf("%6d ",hist[index]);
+                total += hist[index];
+            }
+            printf("\n");
         }
+    }
+
+    printf("Total: %d\n",total);
+    /*
+       unsigned long total = 0;
+       float bins_mid = 0;
+
+       float lo = hist_lower_range;
+       float hi = 0;
+       for(int k=0; k<nbins+1; k++)
+       {
+       if (k==0)
+       {
+    //fprintf(outfile, "Underflow below %.3e %s %lu \n", lo, ",",  hist[k]);
+    }
+    else
+    {
+    if (log_binning_flag==0)
+    {
+    hi = lo + hist_bin_width;
+    }
+    else if (log_binning_flag==1)
+    {
+    //printf("lo: %f\t\tlog(lo): %f\n",lo,log(lo));
+    hi = exp(log(lo) + hist_bin_width);
+    }
+    else if (log_binning_flag==2)
+    {
+    //printf("lo: %f\t\tlog10(lo): %f\n",lo,log10(lo));
+    hi = pow(10,(log10(lo) + hist_bin_width));
+    }
+
+    fprintf(outfile, "%.3e %.3e %lu \n",lo,hi,hist[k]);
+    total += hist[k];
+
+    lo = hi;
+    }
     }
     printf("total: %lu \n", total);
 
@@ -361,7 +434,7 @@ int main(int argc, char **argv)
     free(h_delta1);
     free(hist);
 
-    */
+     */
 
     return 0;
 }  
