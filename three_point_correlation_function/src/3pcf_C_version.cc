@@ -122,10 +122,10 @@ int main(int argc, char **argv)
         }
     }
 
-    if (argc < 2)
+    if (argc < 3)
     {
 
-        printf("\nMust pass in at least two input files on command line!\n");
+        printf("\nMust pass in at least three input files on command line!\n");
         printf("\nUsage: ", argv[0] );
         //printf(" <cluster_data file> <distances file> \n\n");
         exit(1);
@@ -169,152 +169,77 @@ int main(int argc, char **argv)
     }
     printf("hist_upper_range: %f\n",hist_upper_range);
 
-    //FILE *infile0, *infile1, *outfile ;
-    //infile0 = fopen(argv[optind],"r");
-    //infile1 = fopen(argv[optind+1],"r");
+    float *h_alpha[3], *h_delta[3];
 
-
-    float *h_alpha0, *h_delta0;
-    float *h_alpha1, *h_delta1;
-
-    int NUM_PARTICLES;
-
-    if (argc < 4)
+    // Open the input files and the output file.
+    FILE *infile[3], *outfile;
+    for (int i=0;i<3;i++)
     {
-
-        printf("\nMust pass in cluster_data file  on command line!\n");
-        printf("\nUsage: ", argv[0] );
-        printf(" <cluster_data file> <distances file> \n\n");
-        exit(1);
+        infile[i] = fopen(argv[optind+i],"r");
+        printf("Opening input file %d: %s\n",i,argv[optind+i]);
     }
-
-    FILE *infile0, *infile1, *outfile ;
-    //infile0 = fopen(argv[1],"r");
-    //infile1 = fopen(argv[2],"r");
-    infile0 = fopen(argv[optind],"r");
-    infile1 = fopen(argv[optind+1],"r");
-
     outfile = fopen(outfilename, "w");
 
-    printf("Opening input file 0: %s\n",argv[optind]);
-    printf("Opening input file 1: %s\n",argv[optind+1]);
-
-
-    bool two_different_files = 1;
-    if (strcmp(argv[1],argv[2])==0)
+    // Determine which combination of files we are doing.
+    // 0 - all the same (DDD or RRR)
+    // 1 - first one is different (DRR or RDD)
+    // 2 - middle one is different (DRD or RDR)
+    // 3 - last one is different (RRD or DDR)
+    bool which_three_input_files = 0;
+    if (strcmp(argv[1],argv[2])==0 && strcmp(argv[1],argv[3])==0)
     {
-        two_different_files = 0;
-        printf("Using the same file!\n");
+        which_three_input_files = 0;
+        printf("Using the same file! (DDD or RRR)\n");
+    }
+    else if (strcmp(argv[1],argv[2])!=0 && strcmp(argv[2],argv[3])==0)
+    {
+        which_three_input_files = 1;
+        printf("Not the same file! (DRR or RDD)\n");
+    }
+    else if (strcmp(argv[1],argv[3])!=0 && strcmp(argv[1],argv[3])==0)
+    {
+        which_three_input_files = 2;
+        printf("Not the same file! (DRD or RDR)\n");
+    }
+    else if (strcmp(argv[1],argv[2])==0 && strcmp(argv[1],argv[3])!=0)
+    {
+        which_three_input_files = 2;
+        printf("Not the same file! (RRD or DDR)\n");
     }
 
-    // Set a default output file name, if none was passed in on the
-    // command line.
-    /*
-    if (outfilename == NULL)
-    {
-        outfilename = defaultoutfilename;
-        printf("Output filename is %s\n", outfilename);
-    }
-    */
-
-
-
-    //////////////////////////////////////////////////////////////////////
-    // Read in the cluster_data file
+    ////////////////////////////////////////////////////////////////////////////
+    // Read in the files.
     ////////////////////////////////////////////////////////////////////////////
 
-    //char axis_titles[256];
-    //char dummy[256];
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Read in the first file
-    ////////////////////////////////////////////////////////////////////////////
-
-    int NUM_GALAXIES0;
-    int NUM_GALAXIES1;
-    //fscanf(infile0, "%s %s %s", &axis_titles, &dummy, &axis_titles);
-    fscanf(infile0, "%d", &NUM_GALAXIES0);
-
-    int size_of_galaxy_array = NUM_GALAXIES0 * sizeof(float);    
-    printf("SIZE 0 # GALAXIES: %d\n",NUM_GALAXIES0);
-
-    h_alpha0 = (float*)malloc(size_of_galaxy_array);
-    h_delta0 = (float*)malloc(size_of_galaxy_array);
+    int NUM_GALAXIES[3];
+    int size_of_galaxy_array[3];
     float temp0, temp1;
 
-    for(int i=0; i<NUM_GALAXIES0; i++)
+    for (int i=0;i<3;i++)
     {
-        fscanf(infile0, "%f %f", &temp0, &temp1);
-        h_alpha0[i] = temp0/scale_factor;
-        h_delta0[i] = temp1/scale_factor;
-        //fscanf(infile0, "%f %f", &h_alpha0[i]*scale_factor, &h_delta0[i]*scale_factor);
-        //if (i<10)
-        //printf("%e %e\n", h_alpha0[i], h_delta0[i]);
+        fscanf(infile[i], "%d", &NUM_GALAXIES[i]);
+        size_of_galaxy_array[i] = NUM_GALAXIES[i] * sizeof(float);    
+        printf("SIZE %d # GALAXIES: %d\n",i,NUM_GALAXIES[i]);
+
+        h_alpha[i] = (float*)malloc(size_of_galaxy_array[i]);
+        h_delta[i] = (float*)malloc(size_of_galaxy_array[i]);
+
+        for(int j=0; j<NUM_GALAXIES[i]; j++)
+        {
+            fscanf(infile[i], "%f %f", &temp0, &temp1);
+            h_alpha[i][j] = temp0/scale_factor;
+            h_delta[i][j] = temp1/scale_factor;
+            //fscanf(infile0, "%f %f", &h_alpha0[i]*scale_factor, &h_delta0[i]*scale_factor);
+            //if (i<10)
+            //printf("%e %e\n", h_alpha0[i], h_delta0[i]);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // Read in the second file
-    ////////////////////////////////////////////////////////////////////////////
-
-    //fscanf(infile1, "%s %s %s", &axis_titles, &dummy, &axis_titles);
-    fscanf(infile1, "%d", &NUM_GALAXIES1);
-    printf("SIZE 1 # GALAXIES: %d\n",NUM_GALAXIES1);
-
-    size_of_galaxy_array = NUM_GALAXIES1 * sizeof(float);    
-    h_alpha1 = (float*)malloc(size_of_galaxy_array);
-    h_delta1 = (float*)malloc(size_of_galaxy_array);
-
-    for(int i=0; i<NUM_GALAXIES1; i++)
-    {
-        fscanf(infile1, "%f %f", &temp0, &temp1);
-        h_alpha1[i] = temp0/scale_factor;
-        h_delta1[i] = temp1/scale_factor;
-        //fscanf(infile1, "%f %f", &h_alpha1[i]*scale_factor, &h_delta1[i]*scale_factor);
-        //if (i<10)
-        //printf("%e %e\n", h_alpha1[i], h_delta1[i]);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Read in the first file
-    ////////////////////////////////////////////////////////////////////////////
-    /*
-
-       fscanf(infile0, "%s %s %s", &axis_titles, &dummy, &axis_titles);
-       fscanf(infile0, "%d", &NUM_PARTICLES);
-
-       int size = NUM_PARTICLES * sizeof(float);    
-       printf("SIZE0 # particles: %d\n",NUM_PARTICLES);
-
-       h_alpha0 = (float*)malloc(size);
-       h_delta0 = (float*)malloc(size);
-
-       for(int i=0; i<NUM_PARTICLES; i++)
-       {
-       fscanf(infile0, "%f %s %f %s ", &h_alpha0[i], &dummy, &h_delta0[i], &dummy);
-       }
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Read in the second file
-    ////////////////////////////////////////////////////////////////////////////
-
-    fscanf(infile1, "%s %s %s", &axis_titles, &dummy, &axis_titles);
-    fscanf(infile1, "%d", &NUM_PARTICLES);
-    printf("SIZE1 # particles: %d\n",NUM_PARTICLES);
-
-    h_alpha1 = (float*)malloc(size);
-    h_delta1 = (float*)malloc(size);
-
-    for(int i=0; i<NUM_PARTICLES; i++)
-    {
-    fscanf(infile1, "%f %s %f %s ", &h_alpha1[i], &dummy, &h_delta1[i], &dummy);
-    }
-     */
-
-
-    ////////////////////////////////////////////////////////////////////////////
-    //allocation of histogram
+    // Allocation of histograms.
     ///////////////////////////////////////////////////////////////////////////
 
+    /*
     unsigned long *hist;
     float hist_min = hist_lower_range;
     float hist_max = hist_upper_range;
@@ -347,7 +272,7 @@ int main(int argc, char **argv)
 
 
             bool do_calc = 1;
-            if (two_different_files)
+            if (which_three_input_files)
             {
                 do_calc = 1;
             }
@@ -358,7 +283,7 @@ int main(int argc, char **argv)
                 else
                     do_calc=0;
             }
-            
+
             if (do_calc)
             {
                 dist = distance(h_alpha0[i],h_delta0[i],h_alpha1[j],h_delta1[j],conv_factor_angle);
@@ -434,6 +359,8 @@ int main(int argc, char **argv)
     free(h_alpha1);
     free(h_delta1);
     free(hist);
+
+    */
 
     return 0;
 }  
