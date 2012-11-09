@@ -169,7 +169,7 @@ int main(int argc, char **argv)
     }
     printf("hist_upper_range: %f\n",hist_upper_range);
 
-    float *h_alpha[3], *h_delta[3];
+    float *h_x[3], *h_y[3], *h_z[3];
 
     // Open the input files and the output file.
     FILE *infile[3], *outfile;
@@ -213,7 +213,7 @@ int main(int argc, char **argv)
 
     int NUM_GALAXIES[3];
     int size_of_galaxy_array[3];
-    float temp0, temp1;
+    float temp0, temp1, temp2;
 
     for (int i=0;i<3;i++)
     {
@@ -221,17 +221,18 @@ int main(int argc, char **argv)
         size_of_galaxy_array[i] = NUM_GALAXIES[i] * sizeof(float);    
         printf("SIZE %d # GALAXIES: %d\n",i,NUM_GALAXIES[i]);
 
-        h_alpha[i] = (float*)malloc(size_of_galaxy_array[i]);
-        h_delta[i] = (float*)malloc(size_of_galaxy_array[i]);
+        h_x[i] = (float*)malloc(size_of_galaxy_array[i]);
+        h_y[i] = (float*)malloc(size_of_galaxy_array[i]);
+        h_z[i] = (float*)malloc(size_of_galaxy_array[i]);
 
         for(int j=0; j<NUM_GALAXIES[i]; j++)
         {
-            fscanf(infile[i], "%f %f", &temp0, &temp1);
-            h_alpha[i][j] = temp0/scale_factor;
-            h_delta[i][j] = temp1/scale_factor;
-            //fscanf(infile0, "%f %f", &h_alpha0[i]*scale_factor, &h_delta0[i]*scale_factor);
-            //if (i<10)
-            //printf("%e %e\n", h_alpha0[i], h_delta0[i]);
+            fscanf(infile[i], "%f %f %f", &temp0, &temp1, &temp2);
+            h_x[i][j] = temp0/scale_factor;
+            h_y[i][j] = temp1/scale_factor;
+            h_z[i][j] = temp2/scale_factor;
+            if (i<10)
+                printf("%e %e %e\n", h_x[i][j],h_y[i][j],h_z[i][j]);
         }
     }
 
