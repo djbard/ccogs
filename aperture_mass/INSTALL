@@ -1,0 +1,86 @@
+################################################################################
+# INSTALL
+################################################################################
+
+This file will walk you through the compilation and installation process. The 
+accompanying README file can show you how to run the code and verify that you've
+installed it properly.
+
+################################################################################
+# Requirements 
+################################################################################
+
+These directions assume you are installing this in a Linux environment.
+
+-------------------------------
+# Requrements for GPU code.
+-------------------------------
+gcc: C/C++ compiler. Tested with 4.1.
+
+make: Standard compilation utility.
+
+CUDA: Tested with version 4.1. It is possible that this code will work with 
+older versions. 
+
+
+----------------------------------------------
+# Requrements for testing and plotting code.
+----------------------------------------------
+
+
+python: the test scripts have been written in python. 
+pyfits: the utility to create a fits file from the aperture mass output file uses pyfits. 
+
+
+
+
+################################################################################
+# Compiling and installing
+################################################################################
+
+From this directory, descend into the src direction and type ``make". That's it!
+You will need to edit the Makefile to point to your own installation of CUDA and the SDK. 
+
+    cd src
+    make
+
+
+
+----------------------------------------------
+# Tweaking the build and installation.
+----------------------------------------------
+
+Let's take a closer look at the Makefile and what you may want to change either
+because of personal preference, or by necessity. 
+
+* Installation location.
+
+    INSTALL_DIR       := ./
+   
+The test scripts will assume that the executables are located here. However,
+depending on your setup and how many people will be using this code, you may
+want to change this to a location common to users "PATH"s like "/usr/local/bin".
+
+In any event, for general usage, you will want the installation directory to be
+in the users "PATH" variable.
+
+* Libraries.
+
+    CUDA_SDK = /path/to/my/cuda/sdk/installation
+    CUDA_INSTALL_PATH := /opt/cuda
+    
+You may have to edit thse paths to point to where your CUDA libraries and SDK
+are installed. Note that these paths appear in the definitions of the include
+files and library paths. There is a chance you may have to edit these as well.
+
+INCLUDES          += -I. -I$(CUDA_INSTALL_PATH)/include  -I$(CUDA_SDK)/C/common/inc 
+LIBS              := -L$(CUDA_INSTALL_PATH)/lib64  -L$(CUDA_SDK)/C/common/lib/ -L$(CUDA_SDK)/C/lib/ 
+
+
+We have found many CUDA installations to be somewhat different and rather than 
+trying to provide a fix for every set-up, we have merely tried to provide some 
+guidance. If you are still having problems, please consult us or the NVIDIA 
+CUDA documentation.
+
+
+

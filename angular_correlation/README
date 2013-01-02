@@ -120,6 +120,7 @@ angular_correlation <flags> file0 file1
 
 -m    Data will be read in assuming it is in arc minutes.
 -s    Data will be read in assuming it is in arc seconds.
+-p    Data will be read in assuming it is in [x,y,z] co-ordinates, in Mpc.
 -l <val>   Use log-binning or not:
            val=0: Even spaced binning.
            val=1: Logarithmic binning.
@@ -128,6 +129,7 @@ angular_correlation <flags> file0 file1
 -L <val>   Low-edge of low bin of histogram will be set to <val>.
            Note that the this low-edge, the bin-width, and the number of bins 
            hard-coded into the routine define the histogram binning.
+-S         Silent output for the GPU diagnostic info.
 -o <filename>  Output filename.
 
 file0 and file1 are the two-files used to calculate either DD, RR, or DR.
@@ -161,3 +163,5 @@ for the plot. Details about the matplotlib python plotting library can be found
 at 
 
 http://matplotlib.sourceforge.net/
+
+We have also included a file convertRADECZ_XYZ.py, which will read in an input file that contains the ra, dec and redshift for each object, and will convert it to cartesian x,y,z coordinates in Mpc. Redshift is converted to Mpc based on Lamnda CDM cosmology (not validated at high redshift).  

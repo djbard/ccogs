@@ -17,10 +17,10 @@ INSTALL_DIR       := ../bin/
 # SDK_INSTALL_PATH and CUDA_INSTALL_PATH are probably the more significant
 # environment variables and will depend on your system and where the CUDA
 # libraries and header files are installed.
-SDK_INSTALL_PATH  := ${HOME}/CUDA/SDK_4.0/
-CUDA_INSTALL_PATH := /opt/cuda/
-#SDK_INSTALL_PATH  := $(HOME)/NVIDIA_GPU_Computing_SDK
-#CUDA_INSTALL_PATH := /usr/
+#SDK_INSTALL_PATH  := ${HOME}/CUDA/SDK_4.0/
+#CUDA_INSTALL_PATH := /opt/cuda/
+SDK_INSTALL_PATH  := $(HOME)/NVIDIA_GPU_Computing_SDK
+CUDA_INSTALL_PATH := /usr/local/cuda/
 
 # While the INCLUDES and LIBS flags are dependent on the install path, there may 
 # still be some subdirectories that are machine-dependent. 
@@ -30,6 +30,7 @@ LIBS              += -L$(CUDA_INSTALL_PATH)/lib64
 
 LDFLAGS := -lcudart
 
+COMMONFLAGS       := -m64
 OBJ_DIR           := ./objects/
 CXXFLAGS          := $(COMMONFLAGS)
 
@@ -42,7 +43,7 @@ NVCC              := $(CUDA_INSTALL_PATH)/bin/nvcc -arch sm_20 $(COMMONFLAGS)
 ################################################################################
 # Rules for Makefile
 ################################################################################
-all: angular_correlation angular_correlation_C_version
+all: angular_correlation angular_correlation_C_version angular_correlation_C_version_with_double_precision
 
 angular_correlation : $(OBJ_DIR)/angular_correlation.cu_o
 	mkdir -p $(INSTALL_DIR)
@@ -56,9 +57,14 @@ angular_correlation_C_version : angular_correlation_C_version.cc
 	mkdir -p $(INSTALL_DIR)
 	$(CC) -O1 -o $(INSTALL_DIR)/$@ $@.cc
 
+angular_correlation_C_version_with_double_precision : angular_correlation_C_version_with_double_precision.cc
+	mkdir -p $(INSTALL_DIR)
+	$(CC) -O1 -o $(INSTALL_DIR)/$@ $@.cc
+
 clean:
 	rm -f $(INSTALL_DIR)/angular_correlation_C_version 
 	rm -f $(INSTALL_DIR)/angular_correlation 
+	rm -f $(INSTALL_DIR)/angular_correlation_C_version_with_double_precision
 	rm -f $(OBJ_DIR)/*.o 
 	rm -f $(OBJ_DIR)/*.cu_o 
 

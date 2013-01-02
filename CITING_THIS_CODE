@@ -4,6 +4,21 @@
 
 When citing this code, please reference
 
-XXX
+http://arxiv.org/abs/1208.3658
 
+## BiBteX
+@article{Bard:2012cb,
+    author         = "Bard, Deborah and Bellis, Matthew and Allen, Mark T. and
+    Yepremyan, Hasmik and Kratochvil, Jan M.",
+    title          = "{Cosmological Calculations on the GPU}",
+    year           = "2012",
+    eprint         = "1208.3658",
+    archivePrefix  = "arXiv",
+    primaryClass   = "astro-ph.IM",
+    SLACcitation   = "%%CITATION = ARXIV:1208.3658;%%",
+}
+
+The paper is accepted to the journal, ``Astronomy & Computing". 
+
+http://www.sciencedirect.com/science/journal/22131337
 
