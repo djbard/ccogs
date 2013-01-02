@@ -292,11 +292,12 @@ int main(int argc, char **argv)
     float conv_factor_angle = 57.2957795; // 180/pi // For if we need to convert arcdistance to arcsec or arcmin
     int radec_input = 1; // are we using ra/dec coords, or x/y/z coords? 
     bool silent_on_GPU_testing = false;
+    int cuda_device = 0;
 
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
 
-    while ((c = getopt(argc, argv, "ao:L:l:w:smS")) != -1) {
+    while ((c = getopt(argc, argv, "ao:L:l:w:smSd:")) != -1) {
         switch(c) {
             case 'L':
                 printf("L is set\n");
@@ -328,11 +329,15 @@ int main(int argc, char **argv)
                 outfilename = optarg;
                 printf("Output filename is %s\n", outfilename);
                 break;
+            case 'd':
+                cuda_device = atoi(optarg); // Use this CUDA device.
+                conv_factor_angle *= 3600.0; // convert radians to arcseconds.
+                printf("Will attempt to use CUDA device %d\n",cuda_device);
+                break;
             case 'S':
-                printf("Silent mode - don't run the GPU test (suppresses some output)");
+                printf("Silent mode - don't run the GPU test (suppresses some output)\n");
                 silent_on_GPU_testing = true;
                 break;
-
             case 'p':
                 printf("Using input files in Mpc format");
                 radec_input = 0;
@@ -411,6 +416,19 @@ int main(int argc, char **argv)
     }
     printf("\n");
 
+    ////////////////////////////////////////////////////////////////////////
+    // Set the CUDA device. This is useful if your machine has multiple GPUs
+    // on it. 
+    ////////////////////////////////////////////////////////////////////////
+    cudaError_t error_id = cudaSetDevice(cuda_device);
+    if (error_id == cudaSuccess) {
+        printf( "cudaSetDevice returned %d\n-> %s\n", (int)error_id, cudaGetErrorString(error_id) );
+    }
+    else{
+        printf( "cudaSetDevice failed on Device %d!\n\n",cuda_device);
+        exit(-1);
+    }
+
     if(radec_input==1) int success = doCalcRaDec(infile0, infile1, outfile, silent_on_GPU_testing, scale_factor, nbins, hist_lower_range, hist_upper_range, hist_bin_width, log_binning_flag, two_different_files, conv_factor_angle);
 
     else  int success = doCalcMpc(infile0, infile1, outfile, silent_on_GPU_testing, scale_factor, nbins, hist_lower_range, hist_upper_range, hist_bin_width, log_binning_flag, two_different_files, conv_factor_angle);
@@ -429,10 +447,6 @@ int main(int argc, char **argv)
 ////////////////////////////////////////////////////////////////////////
 
 int doCalcRaDec(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_testing, float scale_factor, int nbins, float hist_lower_range, float hist_upper_range, float hist_bin_width, int log_binning_flag, bool two_different_files, float conv_factor_angle){
-   
-
-
-
     
     float *d_alpha0, *d_delta0;
     float *h_alpha0, *h_delta0;
@@ -650,14 +664,12 @@ int doCalcRaDec(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_
     cudaFree(d_delta0);  
     cudaFree(d_alpha1);
     cudaFree(d_delta1);  
-xs    cudaFree(dev_hist);
+    cudaFree(dev_hist);
 
     return 0;
 }  
 //////////////////////////////////////////////////////////////////////
 
-
-xs
 
 
 
