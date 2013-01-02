@@ -9,7 +9,7 @@ from mAp_tools import *
 ## input catalogue path. The catalogue must be in the format:
 ### ra dec reduced_gamma1  reduced_gamma 2
 ### where ra and dec shoudl be in arcminutes.
-input_catname = "example_cat.txt"
+input_catname = "example_cat_small.cat"
 
 ## output catalogue path
 output_catname = "./out.txt"

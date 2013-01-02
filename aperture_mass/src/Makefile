@@ -3,10 +3,12 @@ BIN_GALS           := mAp_gals.x
 BIN_GRID           := mAp_grid.x
 
 ### You will need to edit this line to point to your own SDK installation
-CUDA_SDK = /path/to/my/cuda/sdk/installation
+#CUDA_SDK = /path/to/my/cuda/sdk/installation
+CUDA_SDK  := ${HOME}/CUDA/SDK_4.0/
 
 ### You will need to edit this line to point to your own cuda installation
 CUDA_INSTALL_PATH := /opt/cuda
+
 
 INCLUDES          += -I. -I$(CUDA_INSTALL_PATH)/include  -I$(CUDA_SDK)/C/common/inc 
 LIBS		  := -L$(CUDA_INSTALL_PATH)/lib64  -L$(CUDA_SDK)/C/common/lib/ -L$(CUDA_SDK)/C/lib/ 

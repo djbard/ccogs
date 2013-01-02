@@ -2,9 +2,9 @@
 #include<string.h>
 #include<stdlib.h>
 #include<math.h>
-#include <unistd.h>
+#include<unistd.h>
 
-#include <cuda_runtime.h>
+#include<cuda_runtime.h>
 
 using namespace std;
 
