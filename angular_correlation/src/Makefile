@@ -19,8 +19,10 @@ INSTALL_DIR       := ../bin/
 # libraries and header files are installed.
 #SDK_INSTALL_PATH  := ${HOME}/CUDA/SDK_4.0/
 #CUDA_INSTALL_PATH := /opt/cuda/
-SDK_INSTALL_PATH  := $(HOME)/NVIDIA_GPU_Computing_SDK
-CUDA_INSTALL_PATH := /usr/local/cuda/
+#SDK_INSTALL_PATH  := $(HOME)/NVIDIA_GPU_Computing_SDK
+#CUDA_INSTALL_PATH := /usr/local/cuda/
+SDK_INSTALL_PATH  := /usr/include
+CUDA_INSTALL_PATH := /usr/local/cuda-5.0/
 
 # While the INCLUDES and LIBS flags are dependent on the install path, there may 
 # still be some subdirectories that are machine-dependent. 
@@ -43,7 +45,7 @@ NVCC              := $(CUDA_INSTALL_PATH)/bin/nvcc -arch sm_20 $(COMMONFLAGS)
 ################################################################################
 # Rules for Makefile
 ################################################################################
-all: angular_correlation angular_correlation_C_version angular_correlation_C_version_with_double_precision
+all: angular_correlation angular_correlation_modified_grid angular_correlation_C_version angular_correlation_C_version_with_double_precision
 
 angular_correlation : $(OBJ_DIR)/angular_correlation.cu_o
 	mkdir -p $(INSTALL_DIR)
@@ -52,6 +54,14 @@ angular_correlation : $(OBJ_DIR)/angular_correlation.cu_o
 $(OBJ_DIR)/angular_correlation.cu_o : angular_correlation.cu
 	mkdir -p $(OBJ_DIR)
 	$(NVCC) -c $(INCLUDES) -o $(OBJ_DIR)/angular_correlation.cu_o $<
+
+angular_correlation_modified_grid : $(OBJ_DIR)/angular_correlation_modified_grid.cu_o
+	mkdir -p $(INSTALL_DIR)
+	$(CXX) -fPIC -o $(INSTALL_DIR)/angular_correlation_modified_grid $(OBJ_DIR)//angular_correlation_modified_grid.cu_o $(LDFLAGS) $(INCLUDES) $(LIBS)
+
+$(OBJ_DIR)/angular_correlation_modified_grid.cu_o : angular_correlation_modified_grid.cu
+	mkdir -p $(OBJ_DIR)
+	$(NVCC) -c $(INCLUDES) -o $(OBJ_DIR)/angular_correlation_modified_grid.cu_o $<
 
 angular_correlation_C_version : angular_correlation_C_version.cc
 	mkdir -p $(INSTALL_DIR)
