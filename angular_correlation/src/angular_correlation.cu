@@ -223,11 +223,12 @@ __global__ void distanceMpc(volatile float *x0, volatile float *y0,  volatile fl
             {
 	        // this is a way simpler calculation. We already have the x,y,z coodis in co-moving distance, so we can simply do the distance
 
-		xdiff = x0[idx] - x1[idx];
-		ydiff = y0[idx] - y1[idx];
-		zdiff = z0[idx] - z1[idx];
+		xdiff = x0[idx] - x1[i];
+		ydiff = y0[idx] - y1[i];
+		zdiff = z0[idx] - z1[i];
 
 		dist = sqrt( (xdiff*xdiff) + (ydiff*ydiff) + (zdiff*zdiff));    
+		//dist = (ydiff*ydiff);
 
                 if(dist < hist_min)
                     bin_index = 0; 
@@ -250,6 +251,11 @@ __global__ void distanceMpc(volatile float *x0, volatile float *y0,  volatile fl
                 }
 
                 atomicAdd(&shared_hist[bin_index],1);
+                //atomicAdd(&shared_hist[9],1);
+                /*
+                if (int(dist)<hist_max)
+                    atomicAdd(&shared_hist[int(dist)],1);
+                    */
 
             }
         }
@@ -297,7 +303,7 @@ int main(int argc, char **argv)
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
 
-    while ((c = getopt(argc, argv, "ao:L:l:w:smSd:")) != -1) {
+    while ((c = getopt(argc, argv, "ao:L:l:w:smSd:p")) != -1) {
         switch(c) {
             case 'L':
                 printf("L is set\n");
@@ -331,7 +337,6 @@ int main(int argc, char **argv)
                 break;
             case 'd':
                 cuda_device = atoi(optarg); // Use this CUDA device.
-                conv_factor_angle *= 3600.0; // convert radians to arcseconds.
                 printf("Will attempt to use CUDA device %d\n",cuda_device);
                 break;
             case 'S':
@@ -712,12 +717,12 @@ int doCalcMpc(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_te
 
     for(int i=0; i<NUM_GALAXIES0; i++)
     {
-        fscanf(infile0, "%f %f", &temp0, &temp1, &temp2);
+        fscanf(infile0, "%f %f %f", &temp0, &temp1, &temp2);
         h_x0[i] = temp0/scale_factor;
         h_y0[i] = temp1/scale_factor;
         h_z0[i] = temp2/scale_factor;
-        //if (i<10)
-        //printf("%e %e\n", h_x0[i], h_y0[i], h_y0[i],);
+        if (i<10)
+            printf("%f %f %f\n", h_x0[i], h_y0[i], h_z0[i]);
     }
 
 
@@ -736,12 +741,12 @@ int doCalcMpc(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_te
 
     for(int i=0; i<NUM_GALAXIES1; i++)
     {
-        fscanf(infile1, "%f %f", &temp0, &temp1, &temp2);
+        fscanf(infile1, "%f %f %f", &temp0, &temp1, &temp2);
         h_x1[i] = temp0/scale_factor;
         h_y1[i] = temp1/scale_factor;
         h_z1[i] = temp2/scale_factor;
-        //if (i<10)
-        //printf("%e %e\n", h_x1[i], h_y1[i], h_z1[i]);
+        if (i<10)
+            printf("%f %f %f\n", h_x1[i], h_y1[i], h_z1[i]);
     }
 
 // get device diagnostics 
@@ -868,11 +873,11 @@ int doCalcMpc(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_te
 
     float lo = hist_lower_range;
     float hi = 0;
-    for(int k=0; k<nbins+1; k++)
+    for(int k=0; k<nbins+2; k++)
     {
         if (k==0)
         {
-            //fprintf(outfile, "Underflow below %.3e %s %lu \n", lo, ",",  hist_array[k]);
+            fprintf(outfile, "Underflow below %.3e %s %lu \n", lo, ",",  hist_array[k]);
         }
         else
         {
