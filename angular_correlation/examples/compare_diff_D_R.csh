@@ -37,10 +37,13 @@ set tag = 'log10binning'
 
 
 echo "#####################"
-#time $gpu_executable $data $flat $global_params -o GPU_"$tag"_"$ngals"k_data_flat_arcmin.dat 
+time $gpu_executable $data $flat0 -S $global_params -o GPU_"$tag"_10k_data_flat_arcmin.dat 
+echo
+time $gpu_executable $data $flat1 -S $global_params -o GPU_"$tag"_20k_data_flat_arcmin.dat 
 echo "#####################"
-time $cpu_executable $data $flat0 $global_params -o CPU_"$tag"_10k_data_flat_arcmin.dat 
-time $cpu_executable $data $flat1 $global_params -o CPU_"$tag"_20k_data_flat_arcmin.dat 
+#time $cpu_executable $data $flat0 -S $global_params -o CPU_"$tag"_10k_data_flat_arcmin.dat 
+#echo
+#time $cpu_executable $data $flat1 -S $global_params -o CPU_"$tag"_20k_data_flat_arcmin.dat 
 
 
 #echo "################################################################################"

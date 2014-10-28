@@ -7,12 +7,18 @@ from mAp_tools import *
 ## the number of galaxies in your sample and the filter radius 
 
 ## input catalogue path. The catalogue must be in the format:
+<<<<<<< HEAD
+### ra dec reduced_gamma1  reduced_gamma 2
+### where ra and dec shoudl be in arcminutes.
+input_catname = "example_cat_small.cat"
+=======
 ##   ra dec reduced_gamma1  reduced_gamma 2
 ## where ra and dec should be in arcminutes.
 ## There are two example catalogues included,
 ## one containing 100,000 objects (sample_data/example_cat_small.cat)
 ## one containing 1,500,000 objects (sample_data/example_cat_large.cat)
 input_catname = "../sample_data/example_cat_small.cat"
+>>>>>>> 9a2ce61e6fa25835d555f7705d216b8a9e2808ab
 
 ## output catalogue path
 output_catname = "./out.txt"

@@ -42,7 +42,7 @@ set tag = 'log10binning'
 
 echo "#####################"
 time $cpu_double_executable $data $flat $global_params -o CPU_double_"$tag"_"$ngals"k_data_flat_arcmin.dat 
-echo "#####################"
+#echo "#####################"
 time $cpu_single_executable $data $flat $global_params -o CPU_single_"$tag"_"$ngals"k_data_flat_arcmin.dat 
 
 

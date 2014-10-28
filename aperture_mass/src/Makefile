@@ -22,12 +22,11 @@ BIN_GRID           := $(INSTALL_DIR)/mAp_grid.x
 # libraries and header files are installed.
 
 ### You will need to edit this line to point to your own SDK installation
-CUDA_SDK = /path/to/my/cuda/sdk/installation
+#CUDA_SDK = /path/to/my/cuda/sdk/installation
+CUDA_SDK  := ${HOME}/CUDA/SDK_4.0/
 
 ### You will need to edit this line to point to your own cuda installation
 CUDA_INSTALL_PATH := /opt/cuda
-
-
 
 
 # While the INCLUDES and LIBS flags are dependent on the install path, there may 
