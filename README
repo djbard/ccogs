@@ -4,7 +4,7 @@
 
 This suite of tools contains packages for computing cosmological quantities on
 the GPU. Details of the calculations themselves and the implementation can
-be found in the "CITING_THIS_CODE" file in this directory.
+be found in the "CITING_THIS_CODE" file in this directory. 
 
 Further questions about this package can be addressed to the developers:
 

@@ -22,12 +22,41 @@ using namespace std;
 
 #define CONV_FACTOR 57.2957795 // 180/pi
 
-
 int doCalcRaDec(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_testing, float scale_factor, int nbins, float hist_lower_range, float hist_upper_range, float hist_bin_width, int log_binning_flag, bool two_different_files, float conv_factor_angle);
 
 int doCalcMpc(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_testing, float scale_factor, int nbins, float hist_lower_range, float hist_upper_range, float hist_bin_width, int log_binning_flag, bool two_different_files, float conv_factor_angle);
 
 void getDeviceDiagnostics(int tot_Gals, int n_coords);
+
+__device__ float acf(float a0, float cos_d0, float sin_d0, float a1, float d1)
+{
+    float w = 0.0;
+
+    float a_diff, sin_a_diff, cos_a_diff;
+    float cos_d1, sin_d1, numer, denom, mult1, mult2;    
+    float d1_rad;
+
+    a_diff = a1 - a0;
+    d1_rad = d1;
+
+    sin_a_diff = sin(a_diff);
+    cos_a_diff = cos(a_diff);
+
+    sin_d1 = sin(d1_rad);
+    cos_d1 = cos(d1_rad);
+
+    mult1 = cos_d1 * cos_d1 * sin_a_diff * sin_a_diff;
+    mult2 = cos_d0 * sin_d1 - sin_d0 * cos_d1 * cos_a_diff;
+    mult2 = mult2 * mult2;
+
+    numer = sqrt(mult1 + mult2); 
+
+    denom = sin_d0 *sin_d1 + cos_d0 * cos_d1 * cos_a_diff;
+
+    w = atan2(numer,denom);  
+
+    return w;
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Kernel to calculate angular distances between galaxies and histogram
@@ -90,14 +119,23 @@ __global__ void distance(volatile float *a0, volatile float *d0, volatile float 
             }
             else // Doing the same file
             {
-                if(idx > i)
-                    do_calc=1;
-                else
-                    do_calc=0;
+                if (xind != yind) // Non-diagonal chunks.
+                {
+                    do_calc = 1;
+                }
+                else // Diagonal chunks.
+                {
+                    if(idx > i)
+                        do_calc=1;
+                    else
+                        do_calc=0;
+                }
             }
             //if(idx > i) ///////// CHECK THIS
             if (do_calc)
             {
+                dist = acf(alpha_rad,cos_d0,sin_d0,a1[i],d1[i]);
+                /*
                 a_diff = a1[i] - alpha_rad;
                 d1_rad = d1[i];
 
@@ -116,6 +154,7 @@ __global__ void distance(volatile float *a0, volatile float *d0, volatile float 
                 denom = sin_d0 *sin_d1 + cos_d0 * cos_d1 * cos_a_diff;
 
                 dist = atan2(numer,denom);  
+                */
                 dist *= conv_factor_angle;  // Convert to degrees or what have you.
 
                 if(dist < hist_min)
@@ -223,12 +262,11 @@ __global__ void distanceMpc(volatile float *x0, volatile float *y0,  volatile fl
             {
 	        // this is a way simpler calculation. We already have the x,y,z coodis in co-moving distance, so we can simply do the distance
 
-		xdiff = x0[idx] - x1[i];
-		ydiff = y0[idx] - y1[i];
-		zdiff = z0[idx] - z1[i];
+		xdiff = x0[idx] - x1[idx];
+		ydiff = y0[idx] - y1[idx];
+		zdiff = z0[idx] - z1[idx];
 
 		dist = sqrt( (xdiff*xdiff) + (ydiff*ydiff) + (zdiff*zdiff));    
-		//dist = (ydiff*ydiff);
 
                 if(dist < hist_min)
                     bin_index = 0; 
@@ -251,11 +289,6 @@ __global__ void distanceMpc(volatile float *x0, volatile float *y0,  volatile fl
                 }
 
                 atomicAdd(&shared_hist[bin_index],1);
-                //atomicAdd(&shared_hist[9],1);
-                /*
-                if (int(dist)<hist_max)
-                    atomicAdd(&shared_hist[int(dist)],1);
-                    */
 
             }
         }
@@ -303,7 +336,7 @@ int main(int argc, char **argv)
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
 
-    while ((c = getopt(argc, argv, "ao:L:l:w:smSd:p")) != -1) {
+    while ((c = getopt(argc, argv, "ao:L:l:w:smSd:")) != -1) {
         switch(c) {
             case 'L':
                 printf("L is set\n");
@@ -337,6 +370,7 @@ int main(int argc, char **argv)
                 break;
             case 'd':
                 cuda_device = atoi(optarg); // Use this CUDA device.
+                conv_factor_angle *= 3600.0; // convert radians to arcseconds.
                 printf("Will attempt to use CUDA device %d\n",cuda_device);
                 break;
             case 'S':
@@ -470,11 +504,7 @@ int doCalcRaDec(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_
 
     fscanf(infile0, "%d", &NUM_GALAXIES0);
 
-<<<<<<< HEAD
-    int size_of_galaxy_array = NUM_GALAXIES0 * sizeof(float);    
-=======
     int size_of_galaxy_array0 = NUM_GALAXIES0 * sizeof(float);    
->>>>>>> 67689501a12b1ad69fd3e26fdb4fd1894a698572
     printf("SIZE 0 # GALAXIES: %d\n",NUM_GALAXIES0);
 
     h_alpha0 = (float*)malloc(size_of_galaxy_array0);
@@ -495,22 +525,13 @@ int doCalcRaDec(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_
     ////////////////////////////////////////////////////////////////////////////
 
     fscanf(infile1, "%d", &NUM_GALAXIES1);
-<<<<<<< HEAD
-
-    size_of_galaxy_array = NUM_GALAXIES1 * sizeof(float);    
-    printf("SIZE 1 # GALAXIES: %d\n",NUM_GALAXIES1);
-=======
->>>>>>> 67689501a12b1ad69fd3e26fdb4fd1894a698572
 
     int size_of_galaxy_array1 = NUM_GALAXIES1 * sizeof(float);    
     printf("SIZE 1 # GALAXIES: %d\n",NUM_GALAXIES1);
 
-<<<<<<< HEAD
-=======
     h_alpha1 = (float*)malloc(size_of_galaxy_array1);
     h_delta1 = (float*)malloc(size_of_galaxy_array1);
 
->>>>>>> 67689501a12b1ad69fd3e26fdb4fd1894a698572
     for(int i=0; i<NUM_GALAXIES1; i++)
     {
         fscanf(infile1, "%f %f", &temp0, &temp1);
@@ -583,13 +604,8 @@ int doCalcRaDec(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_
     cudaMemcpy(d_delta1, h_delta1, size_of_galaxy_array1, cudaMemcpyHostToDevice );
 
     int x, y;
-<<<<<<< HEAD
-    int num_submatrices = NUM_GALAXIES1 / SUBMATRIX_SIZE;
-
-=======
     int num_submatrices_x = NUM_GALAXIES0 / SUBMATRIX_SIZE;
     int num_submatrices_y = NUM_GALAXIES1 / SUBMATRIX_SIZE;
->>>>>>> 67689501a12b1ad69fd3e26fdb4fd1894a698572
     // Take care of edges of matrix.
     if (NUM_GALAXIES0%SUBMATRIX_SIZE != 0)
     {
@@ -610,7 +626,16 @@ int doCalcRaDec(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_
     {
         y = k*SUBMATRIX_SIZE;
         //printf("%d %d\n",k,y);
-        for(int j = 0; j < num_submatrices_x; j++)
+
+        int jmax = 0;
+        // If we're dealing with the same file, then only loop over
+        // the upper half of the matrix of operations.
+        if (two_different_files == 0)
+        {
+            jmax = k;
+        }
+
+        for(int j = jmax; j < num_submatrices_x; j++)
         {
             x = j*SUBMATRIX_SIZE; 
 
@@ -735,12 +760,12 @@ int doCalcMpc(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_te
 
     for(int i=0; i<NUM_GALAXIES0; i++)
     {
-        fscanf(infile0, "%f %f %f", &temp0, &temp1, &temp2);
+        fscanf(infile0, "%f %f", &temp0, &temp1, &temp2);
         h_x0[i] = temp0/scale_factor;
         h_y0[i] = temp1/scale_factor;
         h_z0[i] = temp2/scale_factor;
-        if (i<10)
-            printf("%f %f %f\n", h_x0[i], h_y0[i], h_z0[i]);
+        //if (i<10)
+        //printf("%e %e\n", h_x0[i], h_y0[i], h_y0[i],);
     }
 
 
@@ -759,12 +784,12 @@ int doCalcMpc(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_te
 
     for(int i=0; i<NUM_GALAXIES1; i++)
     {
-        fscanf(infile1, "%f %f %f", &temp0, &temp1, &temp2);
+        fscanf(infile1, "%f %f", &temp0, &temp1, &temp2);
         h_x1[i] = temp0/scale_factor;
         h_y1[i] = temp1/scale_factor;
         h_z1[i] = temp2/scale_factor;
-        if (i<10)
-            printf("%f %f %f\n", h_x1[i], h_y1[i], h_z1[i]);
+        //if (i<10)
+        //printf("%e %e\n", h_x1[i], h_y1[i], h_z1[i]);
     }
 
 // get device diagnostics 
@@ -891,11 +916,11 @@ int doCalcMpc(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_te
 
     float lo = hist_lower_range;
     float hi = 0;
-    for(int k=0; k<nbins+2; k++)
+    for(int k=0; k<nbins+1; k++)
     {
         if (k==0)
         {
-            fprintf(outfile, "Underflow below %.3e %s %lu \n", lo, ",",  hist_array[k]);
+            //fprintf(outfile, "Underflow below %.3e %s %lu \n", lo, ",",  hist_array[k]);
         }
         else
         {
