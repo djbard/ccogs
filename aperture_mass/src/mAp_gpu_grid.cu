@@ -4,9 +4,9 @@
 #include <math.h>
 #include <assert.h>
 
-#include <iostream.h>
-#include <iomanip.h>
-#include <fstream.h>
+#include <iostream>
+#include <iomanip>
+#include <fstream>
 
 #include <unistd.h>
 
@@ -14,7 +14,8 @@
 
 #include <cuda.h>
 #include <cuda_runtime_api.h>
-#include "cutil.h"
+//#include "cutil.h"
+using namespace std;
 
 //////////////////////////////////////////////////////////////////////////  
 //this version calculates the aperture mass at the galaxy positions. 
