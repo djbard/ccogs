@@ -470,11 +470,8 @@ int doCalcRaDec(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_
 
     fscanf(infile0, "%d", &NUM_GALAXIES0);
 
-<<<<<<< HEAD
-    int size_of_galaxy_array = NUM_GALAXIES0 * sizeof(float);    
-=======
     int size_of_galaxy_array0 = NUM_GALAXIES0 * sizeof(float);    
->>>>>>> 67689501a12b1ad69fd3e26fdb4fd1894a698572
+
     printf("SIZE 0 # GALAXIES: %d\n",NUM_GALAXIES0);
 
     h_alpha0 = (float*)malloc(size_of_galaxy_array0);
@@ -495,22 +492,12 @@ int doCalcRaDec(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_
     ////////////////////////////////////////////////////////////////////////////
 
     fscanf(infile1, "%d", &NUM_GALAXIES1);
-<<<<<<< HEAD
-
-    size_of_galaxy_array = NUM_GALAXIES1 * sizeof(float);    
-    printf("SIZE 1 # GALAXIES: %d\n",NUM_GALAXIES1);
-=======
->>>>>>> 67689501a12b1ad69fd3e26fdb4fd1894a698572
-
     int size_of_galaxy_array1 = NUM_GALAXIES1 * sizeof(float);    
     printf("SIZE 1 # GALAXIES: %d\n",NUM_GALAXIES1);
 
-<<<<<<< HEAD
-=======
     h_alpha1 = (float*)malloc(size_of_galaxy_array1);
     h_delta1 = (float*)malloc(size_of_galaxy_array1);
 
->>>>>>> 67689501a12b1ad69fd3e26fdb4fd1894a698572
     for(int i=0; i<NUM_GALAXIES1; i++)
     {
         fscanf(infile1, "%f %f", &temp0, &temp1);
@@ -583,13 +570,10 @@ int doCalcRaDec(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_
     cudaMemcpy(d_delta1, h_delta1, size_of_galaxy_array1, cudaMemcpyHostToDevice );
 
     int x, y;
-<<<<<<< HEAD
-    int num_submatrices = NUM_GALAXIES1 / SUBMATRIX_SIZE;
 
-=======
     int num_submatrices_x = NUM_GALAXIES0 / SUBMATRIX_SIZE;
     int num_submatrices_y = NUM_GALAXIES1 / SUBMATRIX_SIZE;
->>>>>>> 67689501a12b1ad69fd3e26fdb4fd1894a698572
+    
     // Take care of edges of matrix.
     if (NUM_GALAXIES0%SUBMATRIX_SIZE != 0)
     {
