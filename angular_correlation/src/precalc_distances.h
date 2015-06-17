@@ -43,5 +43,7 @@ float distance(float x0, float y0, float z0, float x1, float y1, float z1)
     float diffz = z0-z1;
 
     //printf("diff: %f %f %f\n",diffx,x0,x1);
+    //printf("diff: %f %f %f\n",diffy,y0,y1);
+    //printf("diff: %f %f %f\n",diffz,z0,z1);
     return sqrt(diffx*diffx + diffy*diffy + diffz*diffz);
 }

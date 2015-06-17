@@ -74,7 +74,7 @@ int main()
     //int gal_chunk_coordinate[NGALS][3];
     int *gal_chunk_coordinate[NGALS];
     for(int i=0;i<NGALS;i++) {
-        gal_chunk_coordinate[i] = (int*)malloc(3*sizeof(int));
+        gal_chunk_coordinate[i] = (int*)malloc(30*sizeof(int));
     }
 
     float coord[3] = {0.0, 0.0, 0.0};
@@ -211,6 +211,7 @@ int main()
     int iindex,jindex,kindex;
 
     float *distances;
+    printf("MAX_DISTANCES: %f\n",MAX_DISTANCES/1e6);
     distances = (float*)malloc(MAX_DISTANCES*sizeof(float));
 
     float *unique_distances;
@@ -258,8 +259,11 @@ int main()
                         //printf("%d %d %d %f %f %f\n",ii,jj,n0, gal_chunksx[i][j][k][ii],gal_chunksy[i][j][k][ii],gal_chunksz[i][j][k][ii]);
                         disttemp = distance(gal_chunksx[i][j][k][ii],gal_chunksy[i][j][k][ii],gal_chunksz[i][j][k][ii],\
                                         gals_superchunk[jj][0],gals_superchunk[jj][1],gals_superchunk[jj][2]);
+                        //printf("disttemp: %f\n",disttemp);
                         if (disttemp>0 && disttemp<maxsep) {
+                            //printf("here! %d\n",ndist);
                             distances[ndist] = disttemp;
+                            //printf("there!\n");
                             ndist++;
                             if (ndist%100000==0)
                                 printf("ndist: %d\n",ndist);
