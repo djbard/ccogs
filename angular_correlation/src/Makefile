@@ -67,6 +67,10 @@ angular_correlation_C_version : angular_correlation_C_version.cc
 	mkdir -p $(INSTALL_DIR)
 	$(CC) -O1 -o $(INSTALL_DIR)/$@ $@.cc
 
+test_precalc : test_precalc.cc
+	mkdir -p $(INSTALL_DIR)
+	$(CC) -O1 -o $(INSTALL_DIR)/$@ $@.cc
+
 angular_correlation_C_version_with_double_precision : angular_correlation_C_version_with_double_precision.cc
 	mkdir -p $(INSTALL_DIR)
 	$(CC) -O1 -o $(INSTALL_DIR)/$@ $@.cc
