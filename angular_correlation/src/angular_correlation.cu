@@ -877,7 +877,8 @@ int doCalcMpc(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_te
     {
         if (k==0)
         {
-            fprintf(outfile, "Underflow below %.3e %s %lu \n", lo, ",",  hist_array[k]);
+            //fprintf(outfile, "Underflow below %.3e %s %lu \n", lo, ",",  hist_array[k]);
+            printf("Underflow below %.3e %s %lu \n", lo, ",",  hist_array[k]);
         }
         else
         {

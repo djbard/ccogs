@@ -20,9 +20,9 @@ INSTALL_DIR       := ../bin/
 #SDK_INSTALL_PATH  := ${HOME}/CUDA/SDK_4.0/
 #CUDA_INSTALL_PATH := /opt/cuda/
 #SDK_INSTALL_PATH  := $(HOME)/NVIDIA_GPU_Computing_SDK
-#CUDA_INSTALL_PATH := /usr/local/cuda/
+CUDA_INSTALL_PATH := /usr/local/cuda/
 SDK_INSTALL_PATH  := /usr/include
-CUDA_INSTALL_PATH := /usr/local/cuda-5.0/
+#CUDA_INSTALL_PATH := /usr/local/cuda-5.0/
 
 # While the INCLUDES and LIBS flags are dependent on the install path, there may 
 # still be some subdirectories that are machine-dependent. 
