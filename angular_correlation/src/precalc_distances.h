@@ -27,7 +27,8 @@ void assign_chunk_coordinate(float *coord, float *vec_ranges_lo, float *vec_binw
         bin = (int)((coord[i]-vec_ranges_lo[i])/vec_binwidths[i]);
         chunk_coord[i] = bin;
         if(bin<0) {
-            printf("LESS THAN 0!!!!");
+            printf("LESS THAN 0!!!!\n");
+            printf("%d %f %f %f\n",i,coord[i],vec_ranges_lo[i],vec_binwidths[i]);
             exit(-1);
         }
         //printf("%d\n",bin);

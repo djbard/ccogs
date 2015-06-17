@@ -6,31 +6,113 @@
 
 #include "precalc_distances.h"
 
-#define NGALS 100000
-#define MAX_NGALS_IN_SUBVOLUME 600
+#define NGALS 1000000
+#define MAX_NGALS_IN_SUBVOLUME 800
 #define MAX_DISTANCES (NGALS/1000)*NGALS
-#define NBINS_SUBVOLUME_X 15
-#define NBINS_SUBVOLUME_Y 25
-#define NBINS_SUBVOLUME_Z 12
+#define NBINS_SUBVOLUME_X 16
+#define NBINS_SUBVOLUME_Y 29
+#define NBINS_SUBVOLUME_Z 16
 
 ///////////////////////////////////////////////////////////////////////////////
 int compare (const void * a, const void * b)
 {
-      float fa = *(const float*) a;
-        float fb = *(const float*) b;
-          return (fa > fb) - (fa < fb);
+    float fa = *(const float*) a;
+    float fb = *(const float*) b;
+    return (fa > fb) - (fa < fb);
 }
 ///////////////////////////////////////////////////////////////////////////////
 
-int main()
+int main(int argc, char **argv)
 {
 
     float maxsep = 150.;
-    float vec_ranges_lo[3] = {-2000., -1720., 755.};
-    float vec_ranges_hi[3] = {140., 1780., 2500.};
+    //float vec_ranges_lo[3] = {-2000., -1720., 755.};
+    //float vec_ranges_hi[3] = {140., 1780., 2500.};
+    float vec_ranges_lo[3] = {1e9,1e9,1e9};
+    float vec_ranges_hi[3] = {-1e9,-1e9,-1e9};
     float vec_ranges_width[3] = {0.0,0.0,0.0};
     int vec_nbins[3] = {0,0,0};
     float vec_binwidths[3] = {0.0,0.0,0.0};
+
+    extern char *optarg;
+    extern int optind, optopt, opterr;
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Gen some fake galaxies.
+    ////////////////////////////////////////////////////////////////////////////
+    //printf("Gen fake galaxies....\n");
+    float *galsx, *galsy, *galsz;
+    galsx = (float*)malloc(NGALS*sizeof(float));
+    galsy = (float*)malloc(NGALS*sizeof(float));
+    galsz = (float*)malloc(NGALS*sizeof(float));
+    //
+    //
+    //for(int i=0;i<NGALS;i++)
+    //{
+    //galsx[i] = vec_ranges_width[0]*rand()/(float)RAND_MAX + vec_ranges_lo[0];
+    //galsy[i] = vec_ranges_width[1]*rand()/(float)RAND_MAX + vec_ranges_lo[1];
+    //galsz[i] = vec_ranges_width[2]*rand()/(float)RAND_MAX + vec_ranges_lo[2];
+    //
+    //}
+
+    //exit(1);
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Read in galaxies.
+    ////////////////////////////////////////////////////////////////////////////
+    printf("Reading in the galaxies....\n");
+    float temp0, temp1, temp2, dummy, tempdum;
+
+    FILE *infile0, *infile1, *outfile ;
+
+    infile0 = fopen(argv[optind],"r");
+    infile1 = fopen(argv[optind+1],"r");
+
+    int NUM_GALAXIES[2] = {0,0};
+
+    int j = 0;
+    //while(fscanf(infile[i], "%d %f %f %f %f %f %f", &idummy, &dummy, &dummy, &dummy, &temp0, &temp1, &temp2) != EOF)
+    while(fscanf(infile0, "%e %e %e %e %e %e", &tempdum, &tempdum, &tempdum, &temp0, &temp1, &temp2) != EOF)
+    {
+        galsx[j] = temp0;///scale_factor;
+        galsy[j] = temp1;///scale_factor;
+        galsz[j] = temp2;///scale_factor;
+
+        // Keep track of ranges of values
+        if(galsx[j]<vec_ranges_lo[0])
+            vec_ranges_lo[0]=galsx[j]-1;
+        if(galsx[j]>vec_ranges_hi[0])
+            vec_ranges_hi[0]=galsx[j]+1;
+
+        if(galsy[j]<vec_ranges_lo[1])
+            vec_ranges_lo[1]=galsy[j]-1;
+        if(galsy[j]>vec_ranges_hi[1])
+            vec_ranges_hi[1]=galsy[j]+1;
+
+        if(galsz[j]<vec_ranges_lo[2])
+            vec_ranges_lo[2]=galsz[j]-1;
+        if(galsz[j]>vec_ranges_hi[2])
+            vec_ranges_hi[2]=galsz[j]+1;
+
+
+        if (NUM_GALAXIES[0]>=NGALS)
+        {
+            printf("Exceeded max num galaxies");
+            exit(-1);
+        }
+        if (j<10)
+        {
+            printf("%f %f %f\n", galsx[j],galsy[j],galsz[j]);
+        }
+        NUM_GALAXIES[0] += 1;
+        j += 1;
+    }
+
+    printf("NUM_GALAXIES[0]: %d\n",NUM_GALAXIES[0]);
+
+    for(int i=0;i<3;i++) {
+        printf("lo/hi: %d %f %f\n",i,vec_ranges_lo[i],vec_ranges_hi[i]);
+    }
 
     ////////////////////////////////////////////////////////////////////////////
     // Define the ranges for our galaxy chunks
@@ -38,33 +120,12 @@ int main()
     printf("Define the ranges...\n");
     define_ranges(vec_ranges_lo, vec_ranges_hi, maxsep, vec_nbins, vec_binwidths);
 
-    for(int i=0;i<3;i++)
-    {
+    for(int i=0;i<3;i++) {
         printf("%d %d %f\n",i,vec_nbins[i],vec_binwidths[i]);
         vec_ranges_width[i] = vec_ranges_hi[i]-vec_ranges_lo[i];
     }
 
     //fflush(stdout); 
-    //exit(1);
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Gen some fake galaxies.
-    ////////////////////////////////////////////////////////////////////////////
-    printf("Gen fake galaxies....\n");
-    float *galsx, *galsy, *galsz;
-    galsx = (float*)malloc(NGALS*sizeof(float));
-    galsy = (float*)malloc(NGALS*sizeof(float));
-    galsz = (float*)malloc(NGALS*sizeof(float));
-
-
-    for(int i=0;i<NGALS;i++)
-    {
-        galsx[i] = vec_ranges_width[0]*rand()/(float)RAND_MAX + vec_ranges_lo[0];
-        galsy[i] = vec_ranges_width[1]*rand()/(float)RAND_MAX + vec_ranges_lo[1];
-        galsz[i] = vec_ranges_width[2]*rand()/(float)RAND_MAX + vec_ranges_lo[2];
-
-    }
-
     //exit(1);
 
     ////////////////////////////////////////////////////////////////////////////
@@ -153,7 +214,7 @@ int main()
         gal_chunksz[ii][jj][kk][index] = galsz[i];
 
         //printf("%f\n",galsx[i]);
-        //printf("%f\n",gal_chunksx[ii][jj][kk][index]);
+        printf("%f %f %f (%d,%d,%d)\n",gal_chunksx[ii][jj][kk][index],gal_chunksy[ii][jj][kk][index],gal_chunksz[ii][jj][kk][index],ii,jj,kk);
 
         num_in_gal_chunks[ii][jj][kk]++;
         if(num_in_gal_chunks[ii][jj][kk]>MAX_NGALS_IN_SUBVOLUME)
@@ -166,13 +227,13 @@ int main()
     //exit(1);
 
     //for(int i=0;i<NBINS_SUBVOLUME_X;i++) {
-        //printf("----------- %d\n",i);
-        //for(int j=0;j<NBINS_SUBVOLUME_Y;j++) {
-            //for(int k=0;k<NBINS_SUBVOLUME_Z;k++) {
-                //printf("%d ",num_in_gal_chunks[i][j][k]);
-            //}
-            //printf("\n");
-        //}
+    //printf("----------- %d\n",i);
+    //for(int j=0;j<NBINS_SUBVOLUME_Y;j++) {
+    //for(int k=0;k<NBINS_SUBVOLUME_Z;k++) {
+    //printf("%d ",num_in_gal_chunks[i][j][k]);
+    //}
+    //printf("\n");
+    //}
     //}
 
     //exit(1);
@@ -180,22 +241,22 @@ int main()
     float x,y,z;
     int ngals_in_chunk;
     /*
-    for(int i=0;i<NBINS_SUBVOLUME_X;i++) 
-        for(int j=0;j<NBINS_SUBVOLUME_Y;j++) 
-            for(int k=0;k<NBINS_SUBVOLUME_Z;k++) {
-                ngals_in_chunk = num_in_gal_chunks[i][j][k];
-                    for(int n=0;n<ngals_in_chunk;n++) {
-                        //printf("%d\n",n);
-                        x = gal_chunksx[i][j][k][n];
-                        y = gal_chunksy[i][j][k][n];
-                        z = gal_chunksz[i][j][k][n];
-                        //printf("%d %d %d %d     %f %f %f\n",i,j,k,n,x,y,z);
-                        //printf("%d %d %d %d %d\n",i,j,k,ngals_in_chunk,n);
-                        //printf("%f %f %f\n",x,y,z);
+       for(int i=0;i<NBINS_SUBVOLUME_X;i++) 
+       for(int j=0;j<NBINS_SUBVOLUME_Y;j++) 
+       for(int k=0;k<NBINS_SUBVOLUME_Z;k++) {
+       ngals_in_chunk = num_in_gal_chunks[i][j][k];
+       for(int n=0;n<ngals_in_chunk;n++) {
+    //printf("%d\n",n);
+    x = gal_chunksx[i][j][k][n];
+    y = gal_chunksy[i][j][k][n];
+    z = gal_chunksz[i][j][k][n];
+    //printf("%d %d %d %d     %f %f %f\n",i,j,k,n,x,y,z);
+    //printf("%d %d %d %d %d\n",i,j,k,ngals_in_chunk,n);
+    //printf("%f %f %f\n",x,y,z);
 
-                }
-            }
-    */
+    }
+    }
+     */
 
     printf("Calculating distances....\n");
     ///////////////////////////////////////////////////////////////////////////
@@ -258,14 +319,14 @@ int main()
                     for(int jj=0;jj<n1;jj++) {
                         //printf("%d %d %d %f %f %f\n",ii,jj,n0, gal_chunksx[i][j][k][ii],gal_chunksy[i][j][k][ii],gal_chunksz[i][j][k][ii]);
                         disttemp = distance(gal_chunksx[i][j][k][ii],gal_chunksy[i][j][k][ii],gal_chunksz[i][j][k][ii],\
-                                        gals_superchunk[jj][0],gals_superchunk[jj][1],gals_superchunk[jj][2]);
+                                gals_superchunk[jj][0],gals_superchunk[jj][1],gals_superchunk[jj][2]);
                         //printf("disttemp: %f\n",disttemp);
                         if (disttemp>0 && disttemp<maxsep) {
                             //printf("here! %d\n",ndist);
                             distances[ndist] = disttemp;
                             //printf("there!\n");
                             ndist++;
-                            if (ndist%100000==0)
+                            if (ndist%1000000==0)
                                 printf("ndist: %d\n",ndist);
                         }
                     }
@@ -291,7 +352,7 @@ int main()
             final_ndist++;
         }
         //if(i%30==0)
-            //printf("\n");
+        //printf("\n");
     }
     printf("ndist/unique: %d %d\n",ndist,final_ndist);
 

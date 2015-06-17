@@ -16,18 +16,28 @@ def main():
     
     # Read in off the command line some string to look for in the 
     # input files.
+    '''
     tag = 'logbinning_GPU_100k'
     if len(sys.argv)>=2:
         tag = sys.argv[1]
+    '''
 
     filenames = [None,None,None]
-    filenames[0] = "%s_data_data_arcmin.dat" % (tag) # DD
-    filenames[1] = "%s_flat_flat_arcmin.dat" % (tag) # RR
-    filenames[2] = "%s_data_flat_arcmin.dat" % (tag) # DR
+    filenames[0] = sys.argv[1] # DD
+    filenames[1] = filenames[0].replace("data","flat") # RR
+    filenames[2] = filenames[0].replace("data_data","data_flat") # DR
+
+    tag = filenames[0].split("_data")[0]
 
     # Pull the number of galaxies out of the file name.
     ngal_in_file = tag.split('_')[-1][0:-1]
-    ngalaxies = float(ngal_in_file)*1000.0
+    #ngalaxies = float(ngal_in_file)*1000.0
+    nd = 401926.
+    #nr = 213277.
+    #nr = 1075634.
+    #nr = 1075634.
+    nr = 4299990.
+    #nr = 5375624.
 
     ############################################################################
     ############################################################################
@@ -62,12 +72,13 @@ def main():
         elif i==2:
             dr = content[index+2]
 
+    print dd
     ############################################################################
 
     # Calculate the normalization.
-    dd_norm = ((ngalaxies*ngalaxies)-ngalaxies)/2.0
-    rr_norm = ((ngalaxies*ngalaxies)-ngalaxies)/2.0
-    dr_norm = (ngalaxies*ngalaxies)
+    dd_norm = ((nd*nd)-nd)/2.0
+    rr_norm = ((nr*nr)-nr)/2.0
+    dr_norm = (nd*nr)/1.0
 
     print "DD normalization:",dd_norm 
     print "RR normalization:",rr_norm 
@@ -109,14 +120,15 @@ def main():
     ############################################################################
     # Format the plot.
     ############################################################################
-    ax0.set_xlabel(r"$\theta$ (arcmin)", fontsize=24, weight='bold')
-    ax0.set_ylabel(r"w($\theta$)", fontsize=24, weight='bold')
+    ax0.set_xlabel(r"$r$ (Mpc)", fontsize=24, weight='bold')
+    ax0.set_ylabel(r"w($r$)", fontsize=24, weight='bold')
     plt.xticks(fontsize=24,weight='bold')
     plt.yticks(fontsize=24,weight='bold')
 
+    #ax0.scatter(bin_mid,bin_mid*bin_mid*w,s=30)
     ax0.scatter(bin_mid,w,s=30)
-    ax0.set_xlabel(r"$\theta$ (arcminutes)",fontsize=24, weight='bold')
-    ax0.set_ylabel(r"w($\theta$)",fontsize=24, weight='bold')
+    #ax0.set_xlabel(r"$w$ (r)",fontsize=24, weight='bold')
+    #ax0.set_ylabel(r"w($\theta$)",fontsize=24, weight='bold')
 
     plt.xticks(fontsize=24,weight='bold')
     plt.yticks(fontsize=24,weight='bold')
@@ -124,11 +136,33 @@ def main():
     #ax0.set_xscale('log')
     #ax0.set_yscale('log')
    
-    #ax0.set_xlim(-100,5000)
-    ax0.set_xlim(-10,130)
-    #ax0.set_ylim(-0.7,2.8)
+    ax0.set_xlim(10,200)
+    #ax0.set_xlim(-10,130)
+    #ax0.set_ylim(0.001,0.4)
     #ax0.set_ylim(0.01,100)
-    ax0.set_ylim(0.01,5)
+    #ax0.set_ylim(0.01,5)
+
+    ################################################################################
+    # Make a figure on which to plot the DD,RR,DR
+    ################################################################################
+    fig1 = plt.figure(figsize=(15,4),dpi=100,facecolor='w',edgecolor='k')
+    fig1.add_subplot(1,3,1)
+    plt.scatter(bin_mid,dd,s=30)
+    plt.xlabel(r"$\theta$ (degrees)", fontsize=24, weight='bold')
+    plt.ylabel(r"DD normalized counts", fontsize=18, weight='bold')
+
+    fig1.add_subplot(1,3,2)
+    plt.scatter(bin_mid,rr,s=30)
+    plt.xlabel(r"$\theta$ (degrees)", fontsize=24, weight='bold')
+    plt.ylabel(r"RR normalized counts", fontsize=18, weight='bold')
+
+    fig1.add_subplot(1,3,3)
+    plt.scatter(bin_mid,dr,s=30)
+    plt.xlabel(r"$\theta$ (degrees)", fontsize=24, weight='bold')
+    plt.ylabel(r"DR normalized counts", fontsize=18, weight='bold')
+
+    plt.tight_layout()
+
 
     plt.show()
 
