@@ -20,9 +20,14 @@ INSTALL_DIR       := ../bin/
 #SDK_INSTALL_PATH  := ${HOME}/CUDA/SDK_4.0/
 #CUDA_INSTALL_PATH := /opt/cuda/
 #SDK_INSTALL_PATH  := $(HOME)/NVIDIA_GPU_Computing_SDK
-#CUDA_INSTALL_PATH := /usr/local/cuda/
+CUDA_INSTALL_PATH := /usr/local/cuda/
 SDK_INSTALL_PATH  := /usr/include
-CUDA_INSTALL_PATH := /usr/local/cuda-5.0/
+#CUDA_INSTALL_PATH := /usr/local/cuda-5.0/
+#CUDA_INSTALL_PATH := /usr/local/cuda/
+#SDK_INSTALL_PATH  := /usr/include
+#CUDA_INSTALL_PATH := /usr/local/cuda-5.0/
+#CUDA_INSTALL_PATH := /usr/local/cuda-7.0/
+#SDK_INSTALL_PATH  := ${CUDA_INSTALL_PATH}/samples/
 
 # While the INCLUDES and LIBS flags are dependent on the install path, there may 
 # still be some subdirectories that are machine-dependent. 
@@ -67,9 +72,17 @@ angular_correlation_C_version : angular_correlation_C_version.cc
 	mkdir -p $(INSTALL_DIR)
 	$(CC) -O1 -o $(INSTALL_DIR)/$@ $@.cc
 
+#test_precalc : test_precalc.cc
+	#mkdir -p $(INSTALL_DIR)
+	#$(CC) -O1 -o $(INSTALL_DIR)/$@ $@.cc
+
 angular_correlation_C_version_with_double_precision : angular_correlation_C_version_with_double_precision.cc
 	mkdir -p $(INSTALL_DIR)
 	$(CC) -O1 -o $(INSTALL_DIR)/$@ $@.cc
+
+test_precalc : test_precalc.cc
+	mkdir -p $(INSTALL_DIR)
+	$(CC) -DDEBUG -g -o $(INSTALL_DIR)/$@ $@.cc
 
 clean:
 	rm -f $(INSTALL_DIR)/angular_correlation_C_version 

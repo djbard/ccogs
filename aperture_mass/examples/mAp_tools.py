@@ -1,4 +1,4 @@
-import math
+import math, pyfits
 import numpy as np
 
 
@@ -84,8 +84,8 @@ def makeFits_grid(incat, outfile, grid_size):
         arr[tempra][tempdec] = sn[i]
         
         
-    #out_hdu = pyfits.PrimaryHDU(arr)
-    #out_hdu.writeto(outfile)
+    out_hdu = pyfits.PrimaryHDU(arr)
+    out_hdu.writeto(outfile)
 
     return 1
 
