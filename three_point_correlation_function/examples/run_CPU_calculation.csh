@@ -40,7 +40,8 @@ set tag = 'evenbinning_CPU'
 
 
 echo "#####################"
-time $executable $input0 $input0 $input0 $global_params -o DDD_"$tag"_"$ngals"k.dat 
+#time $executable $input0 $input0 $input0 $global_params -o DDD_"$tag"_"$ngals"k.dat 
+echo $executable $input0 $input0 $input0 $global_params -o DDD_"$tag"_"$ngals"k.dat 
 echo "#####################"
 #time $executable $input0 $input0 $input1 $global_params -o DDR_"$tag"_"$ngals"k.dat 
 #echo "#####################"
