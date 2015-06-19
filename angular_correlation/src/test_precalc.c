@@ -6,7 +6,7 @@
 
 #include "precalc_distances.h"
 
-#define NGALS 300000
+#define NGALS 500000
 #define MAX_NGALS_IN_SUBVOLUME 1000
 #define MAX_DISTANCES (NGALS/1000)*NGALS
 #define NBINS_SUBVOLUME_X 16
@@ -31,7 +31,7 @@ int main()
     extern char *optarg;
     extern int optind, optopt, opterr;
 
-    int i,j,k,ii,jj,kk,n;
+    int i=0,j=0,k=0,ii=0,jj=0,kk=0,n=0;
 
     ////////////////////////////////////////////////////////////////////////////
     // Gen some fake galaxies.
@@ -81,6 +81,8 @@ int main()
     NUM_GALAXIES[0] = 0;
     NUM_GALAXIES[1] = 0;
 
+    int max = 80000;
+
     //while(fscanf(infile[i], "%d %f %f %f %f %f %f", &idummy, &dummy, &dummy, &dummy, &temp0, &temp1, &temp2) != EOF)
     while(fscanf(infile0, "%e %e %e %e %e %e", &tempdum0, &tempdum1, &tempdum2, &temp0, &temp1, &temp2) != EOF)
     {
@@ -116,6 +118,10 @@ int main()
         }
         NUM_GALAXIES[0] += 1;
         j += 1;
+
+        if (NUM_GALAXIES[0]>max)
+            break;
+
     }
 
     printf("NUM_GALAXIES[0]: %d\n",NUM_GALAXIES[0]);
@@ -364,12 +370,17 @@ int main()
                                 gals_superchunk[jj][0],gals_superchunk[jj][1],gals_superchunk[jj][2]);
                         //printf("disttemp: %f\n",disttemp);
                         if (disttemp>0 && disttemp<maxsep) {
+                            if(ndist>=MAX_DISTANCES) {
+                                printf("The number of calculated distances (%d) had exceeded the memory allotted (%d).\n",ndist,MAX_DISTANCES);
+                                exit(-1);
+                            }
                             //printf("here! %d\n",ndist);
                             distances[ndist] = disttemp;
                             //printf("there!\n");
                             ndist++;
                             if (ndist%1000000==0)
                                 printf("ndist: %d M\n",ndist/1000000);
+
                         }
                     }
                 }
@@ -444,8 +455,8 @@ int main()
     float hi=256.;
     int nbins=256;
     float binwidth=(hi-lo)/nbins;
-    int *histogram;
-    histogram = (int*)malloc(nbins*sizeof(int));
+    long int *histogram;
+    histogram = (long int*)malloc(nbins*sizeof(long int));
     // Initialize histogram
     for(i=0;i<nbins;i++){
         histogram[i]=0;
@@ -456,12 +467,14 @@ int main()
     for(i=0;i<final_ndist;i++){
         dist=unique_distances[i];
         if(dist>=lo && dist<=hi)
+        {
             bin_index = (int)((dist-lo)/binwidth);
-        histogram[bin_index]++;
+            histogram[bin_index]++;
+        }
     }
     
     for(i=0;i<nbins;i++){
-        printf("%.1f %d\n",i*binwidth + lo + (binwidth/2.),histogram[i]);
+        printf("%.1f %.1f %d\n",i*binwidth + lo , (i+1)*binwidth + lo,histogram[i]);
     }
 
 
