@@ -82,9 +82,12 @@ angular_correlation_C_version_with_double_precision : angular_correlation_C_vers
 	mkdir -p $(INSTALL_DIR)
 	$(CC) -O1 -o $(INSTALL_DIR)/$@ $@.cc
 
-test_precalc : test_precalc.cc
+#test_precalc : test_precalc.cc
+test_precalc : test_precalc.c precalc_distances.c
 	mkdir -p $(INSTALL_DIR)
-	$(CC) -DDEBUG -g -o $(INSTALL_DIR)/$@ $@.cc
+	gcc -c precalc_distances.c
+	gcc -c test_precalc.c
+	$(CC) -DDEBUG -g -o $(INSTALL_DIR)/$@ precalc_distances.o test_precalc.o
 
 clean:
 	rm -f $(INSTALL_DIR)/angular_correlation_C_version 
