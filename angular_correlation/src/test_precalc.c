@@ -19,7 +19,7 @@ int main()
 {
 
     float maxsep;
-    maxsep = 150;
+    maxsep = 200;
     //float vec_ranges_lo[3] = {-2000., -1720., 755.};
     //float vec_ranges_hi[3] = {140., 1780., 2500.};
     float vec_ranges_lo[3] = {1000000.,1000000.,1000000.};
@@ -309,12 +309,18 @@ int main()
     float *distances;
     printf("MAX_DISTANCES: %d M\n",MAX_DISTANCES/1000000);
     distances = (float*)malloc(MAX_DISTANCES*sizeof(float));
+    if(distances)
+        printf("Success!\n");
+    else
+        printf("Booooo!\n");
 
     float *unique_distances;
     unique_distances = (float*)malloc(MAX_DISTANCES*sizeof(float));
 
     int ndist = 0;
     float disttemp = 0;
+
+    float testdist = 16383.5068359375;
 
     for(i=0;i<NBINS_SUBVOLUME_X;i++) {
         printf("i: %d\n",i);
@@ -337,9 +343,9 @@ int main()
                 n1 = 0;
                 int nindex = 0;
 
-                for(ii=-1;ii<2;ii++) {
-                    for(jj=-1;jj<2;jj++) {
-                        for(kk=-1;kk<2;kk++) {
+                for(ii=0;ii<2;ii++) {
+                    for(jj=0;jj<2;jj++) {
+                        for(kk=0;kk<2;kk++) {
                             ntemp = num_in_gal_chunks[i][j][k];
                             for (nindex=0;nindex<ntemp;nindex++)
                             {
@@ -368,8 +374,14 @@ int main()
                             printf("%d %d %d %f %f %f\n",ii,jj,n0, gal_chunksx[i][j][k][ii],gal_chunksy[i][j][k][ii],gal_chunksz[i][j][k][ii]);
                         disttemp = distance(gal_chunksx[i][j][k][ii],gal_chunksy[i][j][k][ii],gal_chunksz[i][j][k][ii],\
                                 gals_superchunk[jj][0],gals_superchunk[jj][1],gals_superchunk[jj][2]);
-                        //printf("disttemp: %f\n",disttemp);
-                        if (disttemp>0 && disttemp<maxsep) {
+                        if (disttemp==testdist) {
+                            printf("%.18f\n",disttemp);
+                            printf("%d %d %d %f %f %f %f %f %f\n",ii,jj,n0, gal_chunksx[i][j][k][ii],gal_chunksy[i][j][k][ii],gal_chunksz[i][j][k][ii], \
+                                gals_superchunk[jj][0],gals_superchunk[jj][1],gals_superchunk[jj][2]);
+                                    }
+                        //printf("disttemp: %32.32f\n",disttemp);
+                        //if (disttemp>0 && disttemp<maxsep) {
+                        if (disttemp>0 && disttemp<20000) {
                             if(ndist>=MAX_DISTANCES) {
                                 printf("The number of calculated distances (%d) had exceeded the memory allotted (%d).\n",ndist,MAX_DISTANCES);
                                 exit(-1);
@@ -434,6 +446,8 @@ int main()
         //{
             //printf("%.18f\n",current_dist);
         //}
+        if(current_dist>16383.5 && current_dist<16384.0)
+            printf("current_dist: %.18f\n",current_dist);
 
         if(current_dist!=prev_dist)
         {
@@ -453,7 +467,7 @@ int main()
     printf("Histogramming!\n");
     float lo=0.;
     float hi=256.;
-    int nbins=256;
+    int nbins=512;
     float binwidth=(hi-lo)/nbins;
     long int *histogram;
     histogram = (long int*)malloc(nbins*sizeof(long int));
@@ -465,17 +479,24 @@ int main()
     int bin_index;
     float dist;
     for(i=0;i<final_ndist;i++){
+    //for(i=0;i<ndist;i++){
         dist=unique_distances[i];
+        //dist=distances[i];
         if(dist>=lo && dist<=hi)
         {
             bin_index = (int)((dist-lo)/binwidth);
+            //printf("%f %d\n",dist,bin_index);
             histogram[bin_index]++;
         }
     }
     
     for(i=0;i<nbins;i++){
-        printf("%.1f %.1f %d\n",i*binwidth + lo , (i+1)*binwidth + lo,histogram[i]);
+        //printf("%.1f %.1f   %d\n",i*binwidth + lo , (i+1)*binwidth + lo,histogram[i]);
+        printf("%5.1f %5.1f %7d\t",i*binwidth + lo , (i+1)*binwidth + lo,histogram[i]);
+        if (i%4==0)
+            printf("\n");
     }
+    printf("\n");
 
 
     ////////////////////////////////////////////////////////////////////////////
