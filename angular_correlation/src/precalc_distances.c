@@ -51,3 +51,49 @@ float distance(float x0, float y0, float z0, float x1, float y1, float z1)
     return sqrt(diffx*diffx + diffy*diffy + diffz*diffz);
     //return diffx*diffx + diffy*diffy + diffz*diffz;
 }
+
+void read_in_6_cols(FILE* infile, int max_num, float *x, float *y, float *z, int *n, float *lo, float *hi, int max_to_read_in) {
+
+    int num=0;
+    float temp0, temp1, temp2, dummy, tempdum0, tempdum1, tempdum2;
+
+    while(fscanf(infile, "%e %e %e %e %e %e", &tempdum0, &tempdum1, &tempdum2, &temp0, &temp1, &temp2) != EOF) {
+        x[num] = temp0;
+        y[num] = temp1;
+        z[num] = temp2;
+
+        // Keep track of ranges of values
+        if(x[num]<lo[0])
+            lo[0]=x[num]-1;
+        if(x[num]>hi[0])
+            hi[0]=x[num]+1;
+
+        if(y[num]<lo[1])
+            lo[1]=y[num]-1;
+        if(y[num]>hi[1])
+            hi[1]=y[num]+1;
+
+        if(z[num]<lo[2])
+            lo[2]=z[num]-1;
+        if(z[num]>hi[2])
+            hi[2]=z[num]+1;
+
+        if(num>=max_num) {
+            printf("Exceeded max num galaxies: %d", max_num);
+            exit(-1);
+        }
+
+        // Diagnostics
+        if (num<10) {
+            printf("%f %f %f\n", x[num],y[num],z[num]);
+        }
+
+        num += 1;
+
+        if (num>=max_to_read_in)
+            break;
+    }
+
+    *n = num;
+}
+

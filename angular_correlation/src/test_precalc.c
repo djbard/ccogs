@@ -34,34 +34,34 @@ int main(int argc, char **argv)
     int i=0,j=0,k=0,ii=0,jj=0,kk=0,n=0;
 
     ////////////////////////////////////////////////////////////////////////////
-    // Gen some fake galaxies.
+    // Allocate some memory.
     ////////////////////////////////////////////////////////////////////////////
-    //printf("Gen fake galaxies....\n");
     printf("Allocating memory for the galaxy coordinates...\n");
-    float *galsx, *galsy, *galsz;
-    galsx = (float*)malloc(NGALS*sizeof(float));
-    galsy = (float*)malloc(NGALS*sizeof(float));
-    galsz = (float*)malloc(NGALS*sizeof(float));
+    float *galsx0, *galsy0, *galsz0;
+    float *galsx1, *galsy1, *galsz1;
+    galsx0 = (float*)malloc(NGALS*sizeof(float));
+    galsy0 = (float*)malloc(NGALS*sizeof(float));
+    galsz0 = (float*)malloc(NGALS*sizeof(float));
+
+    galsx1 = (float*)malloc(NGALS*sizeof(float));
+    galsy1 = (float*)malloc(NGALS*sizeof(float));
+    galsz1 = (float*)malloc(NGALS*sizeof(float));
+
     printf("Allocated memory for the galaxy coordinates.\n");
 
     for(i=0;i<3;i++) {
         vec_ranges_width[i] = vec_ranges_hi[i]-vec_ranges_lo[i];
     }
     for(i=0;i<NGALS;i++) {
-        galsx[i]=0;
-        galsy[i]=0;
-        galsz[i]=0;
+        galsx0[i]=0;
+        galsy0[i]=0;
+        galsz0[i]=0;
+        galsx1[i]=0;
+        galsy1[i]=0;
+        galsz1[i]=0;
     }
 
-    //for(i=0;i<NGALS;i++)
-    //{
-    //galsx[i] = vec_ranges_width[0]*rand()/(float)RAND_MAX + vec_ranges_lo[0];
-    //galsy[i] = vec_ranges_width[1]*rand()/(float)RAND_MAX + vec_ranges_lo[1];
-    //galsz[i] = vec_ranges_width[2]*rand()/(float)RAND_MAX + vec_ranges_lo[2];
-    //}
-
     int NUM_GALAXIES[2] = {NGALS,NGALS};
-    //exit(1);
 
     ////////////////////////////////////////////////////////////////////////////
     // Read in galaxies.
@@ -76,61 +76,16 @@ int main(int argc, char **argv)
             printf("Opening input file %d: %s\n",i,argv[optind+i]);
         }
 
-    //infile0 = fopen("/home/bellis/Downloads/amockdat4400.txt","r");
-    //infile0 = fopen("/home/bellis/Downloads/adr10dat.txt","r");
-    //infile1 = fopen("/home/bellis/Downloads/amockdat4400.txt","r");
-
     NUM_GALAXIES[0] = 0;
     NUM_GALAXIES[1] = 0;
 
     int max = 800000;
 
-    //while(fscanf(infile[i], "%d %f %f %f %f %f %f", &idummy, &dummy, &dummy, &dummy, &temp0, &temp1, &temp2) != EOF)
-    for(i=0;i<1;i++) {
-        j=0;
-    while(fscanf(infile[i], "%e %e %e %e %e %e", &tempdum0, &tempdum1, &tempdum2, &temp0, &temp1, &temp2) != EOF)
-    {
-        galsx[j] = temp0;///scale_factor;
-        galsy[j] = temp1;///scale_factor;
-        galsz[j] = temp2;///scale_factor;
-
-        // Keep track of ranges of values
-        if(galsx[j]<vec_ranges_lo[0])
-            vec_ranges_lo[0]=galsx[j]-1;
-        if(galsx[j]>vec_ranges_hi[0])
-            vec_ranges_hi[0]=galsx[j]+1;
-
-        if(galsy[j]<vec_ranges_lo[1])
-            vec_ranges_lo[1]=galsy[j]-1;
-        if(galsy[j]>vec_ranges_hi[1])
-            vec_ranges_hi[1]=galsy[j]+1;
-
-        if(galsz[j]<vec_ranges_lo[2])
-            vec_ranges_lo[2]=galsz[j]-1;
-        if(galsz[j]>vec_ranges_hi[2])
-            vec_ranges_hi[2]=galsz[j]+1;
-
-
-        if (NUM_GALAXIES[0]>=NGALS)
-        {
-            printf("Exceeded max num galaxies");
-            exit(-1);
-        }
-        if (j<10)
-        {
-            printf("%f %f %f\n", galsx[j],galsy[j],galsz[j]);
-        }
-
-        NUM_GALAXIES[0] += 1;
-        j += 1;
-
-        if (NUM_GALAXIES[0]>=max)
-            break;
-
-    }
-    }
+    read_in_6_cols(infile[0], NGALS, galsx0, galsy0, galsz0, &NUM_GALAXIES[0], vec_ranges_lo, vec_ranges_hi, max);
+    read_in_6_cols(infile[1], NGALS, galsx1, galsy1, galsz1, &NUM_GALAXIES[1], vec_ranges_lo, vec_ranges_hi, max);
 
     printf("NUM_GALAXIES[0]: %d\n",NUM_GALAXIES[0]);
+    printf("NUM_GALAXIES[1]: %d\n",NUM_GALAXIES[1]);
 
     for(i=0;i<3;i++) {
         printf("lo/hi: %d %f %f\n",i,vec_ranges_lo[i],vec_ranges_hi[i]);
@@ -146,41 +101,35 @@ int main(int argc, char **argv)
         printf("%d %d %f\n",i,vec_nbins[i],vec_binwidths[i]);
     }
 
-    //fflush(stdout); 
-    //exit(1);
-
     ////////////////////////////////////////////////////////////////////////////
     // Assign a chunk coordinate to each
     ////////////////////////////////////////////////////////////////////////////
     printf("Assign chunk coordinates...\n");
-    //int gal_chunk_coordinate[NGALS][3];
-    //int *gal_chunk_coordinate[NGALS];
-    //int **gal_chunk_coordinate = (int**)malloc(NGALS*sizeof(int*));
-    int *gal_chunk_coordinate;
-    gal_chunk_coordinate = (int*)malloc(NGALS*3*sizeof(int));
-    //for(i=0;i<NGALS;i++) 
-    //gal_chunk_coordinate[i] = (int*)malloc(3*sizeof(int));
+    
+    int *gal_chunk_coordinate0;
+    gal_chunk_coordinate0 = (int*)malloc(NUM_GALAXIES[0]*3*sizeof(int));
+
+    int *gal_chunk_coordinate1;
+    gal_chunk_coordinate1 = (int*)malloc(NUM_GALAXIES[0]*3*sizeof(int));
 
 
     float coord[3] = {0.0, 0.0, 0.0};
     int chunk_coord[3] = {0,0,0};
+
     for(i=0;i<NUM_GALAXIES[0];i++) {
         if(i%100000==0)
         {
             printf("%d\n",i);
             fflush(stdout);
         }
-        coord[0] = galsx[i];
-        coord[1] = galsy[i];
-        coord[2] = galsz[i];
-        //printf("coord: %f %f %f\n",coord[0],coord[1],coord[2]);
+        coord[0] = galsx0[i];
+        coord[1] = galsy0[i];
+        coord[2] = galsz0[i];
+        
         assign_chunk_coordinate(coord, vec_ranges_lo, vec_binwidths, chunk_coord);
         for(j=0;j<3;j++) {
-            //printf("%d ",chunk_coord[j]);
-            gal_chunk_coordinate[i*3 + j] = chunk_coord[j];
+            gal_chunk_coordinate0[i*3 + j] = chunk_coord[j];
         }
-        //printf("\n");
-        //printf("%f %f %f  (%d %d %d)\n",galsx[i],galsy[i],galsz[i], gal_chunk_coordinate[i][0],gal_chunk_coordinate[i][1],gal_chunk_coordinate[i][2]);
     }
 
     //exit(-1);
@@ -234,23 +183,20 @@ int main(int argc, char **argv)
 
     for(i=0;i<NUM_GALAXIES[0];i++) {
 
-        //ii = gal_chunk_coordinate[i][0];
-        //jj = gal_chunk_coordinate[i][1];
-        //kk = gal_chunk_coordinate[i][2];
-        ii = gal_chunk_coordinate[i*3 + 0];
-        jj = gal_chunk_coordinate[i*3 + 1];
-        kk = gal_chunk_coordinate[i*3 + 2];
+        ii = gal_chunk_coordinate0[i*3 + 0];
+        jj = gal_chunk_coordinate0[i*3 + 1];
+        kk = gal_chunk_coordinate0[i*3 + 2];
 
 
         index = num_in_gal_chunks[ii][jj][kk];
 
-        //printf("%d %d %d %d %f %f %f\n",ii,jj,kk,index,galsx[i],galsy[i],galsz[i]);
+        //printf("%d %d %d %d %f %f %f\n",ii,jj,kk,index,galsx0[i],galsy0[i],galsz0[i]);
 
-        gal_chunksx[ii][jj][kk][index] = galsx[i];
-        gal_chunksy[ii][jj][kk][index] = galsy[i];
-        gal_chunksz[ii][jj][kk][index] = galsz[i];
+        gal_chunksx[ii][jj][kk][index] = galsx0[i];
+        gal_chunksy[ii][jj][kk][index] = galsy0[i];
+        gal_chunksz[ii][jj][kk][index] = galsz0[i];
 
-        //printf("%f\n",galsx[i]);
+        //printf("%f\n",galsx0[i]);
         //printf("%f %f %f (%d,%d,%d) %d\n",gal_chunksx[ii][jj][kk][index],gal_chunksy[ii][jj][kk][index],gal_chunksz[ii][jj][kk][index],ii,jj,kk,index);
 
         num_in_gal_chunks[ii][jj][kk]++;
@@ -525,13 +471,17 @@ int main(int argc, char **argv)
     ////////////////////////////////////////////////////////////////////////////
     // Free up everything. 
     ////////////////////////////////////////////////////////////////////////////
-    free(galsx);
-    free(galsy);
-    free(galsz);
+    free(galsx0);
+    free(galsy0);
+    free(galsz0);
+    free(galsx1);
+    free(galsy1);
+    free(galsz1);
     free(distances);
     free(unique_distances);
     free(histogram);
-    free(gal_chunk_coordinate);
+    free(gal_chunk_coordinate0);
+    free(gal_chunk_coordinate1);
     //for(i=0;i<NGALS;i++) 
     //free(gal_chunk_coordinate[i]);
 
