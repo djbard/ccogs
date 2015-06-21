@@ -22,15 +22,20 @@ def main():
         tag = sys.argv[1]
     '''
 
-    filenames = [None,None,None]
+    filenames = [None,None,None,None]
     filenames[0] = sys.argv[1] # DD
-    filenames[1] = filenames[0].replace("data","flat") # RR
-    filenames[2] = filenames[0].replace("data_data","data_flat") # DR
+    #filenames[1] = filenames[0].replace("data","flat") # RR
+    #filenames[2] = filenames[0].replace("data_data","data_flat") # DR
+    filenames[1] = filenames[0].replace("DD","RR") # RR
+    filenames[2] = filenames[0].replace("DD","DRa") # DR
+    filenames[3] = filenames[0].replace("DD","DRb") # DR
 
-    tag = filenames[0].split("_data")[0]
+    tag = filenames[0].split("DD_")[1].split('.')[0]
 
     # Pull the number of galaxies out of the file name.
-    ngal_in_file = tag.split('_')[-1][0:-1]
+    #ngal_in_file = tag.split('_')[-1][0:-1]
+    #ngal_in_file = tag.split('_')[-1][0:-1]
+
     #ngalaxies = float(ngal_in_file)*1000.0
     #nd = 401926.
     #nr = 213277.
@@ -46,8 +51,11 @@ def main():
     #nd = 401927.
     #nr = 216323.
 
-    nd = 401927.
-    nr = 213277.
+    #nd = 401927.
+    #nr = 213277.
+
+    nd = 0
+    nr = 0
 
     ############################################################################
     ############################################################################
@@ -58,31 +66,40 @@ def main():
     bin_lo = None
     bin_hi = None
 
+    numbers = []
+
     # Loop over the files and pull out the necessary info.
     for i,name in enumerate(filenames):
 
         print "Opening: ",name 
-        infile = open(name)
+        #infile = open(name)
+
+        nums = np.loadtxt(name)[0:2]
 
         # Parse the entire contents of the file into a big array of floats.
-        content = np.array(infile.read().split()).astype('float')
+        content = np.loadtxt(name,skiprows=2)
+        nentries = len(content)
+        content = content.transpose()
 
         # We know there are three columns of numbers, so we can pull out what
         # we want using an array of the indices.
-        nentries = len(content)
-        nbins = nentries/3
-        index = np.arange(0,nentries,3)
-
         if i==0:
-            bin_lo = content[index]
-            bin_hi = content[index+1]
-            dd = content[index+2]
+            bin_lo = content[0]
+            bin_hi = content[1]
+            dd = content[2]
+            nd = nums[0]
         elif i==1:
-            rr = content[index+2]
+            rr = content[2]
+            nr = nums[0]
         elif i==2:
-            dr = content[index+2]
+            dr = content[2]
+            print dr[0:10]
+        elif i==3:
+            dr += content[2]
+            print dr[0:10]
 
-    print dd
+    #print dd
+    print "nd/nr: %d %d" % (nd,nr)
     ############################################################################
 
     # Calculate the normalization.
@@ -138,7 +155,7 @@ def main():
     bin_mid *= 0.7
 
     #ax0.scatter(bin_mid,bin_mid*bin_mid*w,s=30)
-    ax0.scatter(bin_mid,np.log10(w),s=30)
+    ax0.scatter(bin_mid,w,s=30)
     #ax0.scatter(bin_mid,w,s=30)
     #ax0.set_xlabel(r"$w$ (r)",fontsize=24, weight='bold')
     #ax0.set_ylabel(r"w($\theta$)",fontsize=24, weight='bold')
@@ -149,7 +166,7 @@ def main():
     #ax0.set_xscale('log')
     #ax0.set_yscale('log')
    
-    ax0.set_xlim(10,200)
+    #ax0.set_xlim(10,200)
     #ax0.set_xlim(-10,130)
     #ax0.set_ylim(0.001,0.4)
     #ax0.set_ylim(0.01,100)

@@ -6,8 +6,8 @@
 
 #include "precalc_distances.h"
 
-#define NGALS 600000
-#define MAX_NGALS_IN_SUBVOLUME 1000
+#define NGALS 1000000
+#define MAX_NGALS_IN_SUBVOLUME 2000
 #define MAX_DISTANCES (NGALS/1000)*NGALS
 #define NBINS_SUBVOLUME_X 16
 #define NBINS_SUBVOLUME_Y 29
@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 {
 
     float maxsep;
-    maxsep = 150;
+    maxsep = 200;
     //float vec_ranges_lo[3] = {-2000., -1720., 755.};
     //float vec_ranges_hi[3] = {140., 1780., 2500.};
     float vec_ranges_lo[3] = {1000000.,1000000.,1000000.};
@@ -31,34 +31,40 @@ int main(int argc, char **argv)
     extern char *optarg;
     extern int optind, optopt, opterr;
 
-    int i=0,j=0,k=0,ii=0,jj=0,kk=0,n=0;
+    int i=0,j=0,k=0,ii=0,jj=0,kk=0,n=0,nfile=0;
 
     ////////////////////////////////////////////////////////////////////////////
     // Allocate some memory.
     ////////////////////////////////////////////////////////////////////////////
     printf("Allocating memory for the galaxy coordinates...\n");
-    float *galsx0, *galsy0, *galsz0;
-    float *galsx1, *galsy1, *galsz1;
-    galsx0 = (float*)malloc(NGALS*sizeof(float));
-    galsy0 = (float*)malloc(NGALS*sizeof(float));
-    galsz0 = (float*)malloc(NGALS*sizeof(float));
+    //float *galsx0, *galsy0, *galsz0;
+    //float *galsx1, *galsy1, *galsz1;
+    float *galsx[2], *galsy[2], *galsz[2];
 
-    galsx1 = (float*)malloc(NGALS*sizeof(float));
-    galsy1 = (float*)malloc(NGALS*sizeof(float));
-    galsz1 = (float*)malloc(NGALS*sizeof(float));
+    for(i=0;i<2;i++) {
+        galsx[i] = (float*)malloc(NGALS*sizeof(float));
+        galsy[i] = (float*)malloc(NGALS*sizeof(float));
+        galsz[i] = (float*)malloc(NGALS*sizeof(float));
+    }
+    //galsx0 = (float*)malloc(NGALS*sizeof(float));
+    //galsy0 = (float*)malloc(NGALS*sizeof(float));
+    //galsz0 = (float*)malloc(NGALS*sizeof(float));
+
+    //galsx1 = (float*)malloc(NGALS*sizeof(float));
+    //galsy1 = (float*)malloc(NGALS*sizeof(float));
+    //galsz1 = (float*)malloc(NGALS*sizeof(float));
 
     printf("Allocated memory for the galaxy coordinates.\n");
 
     for(i=0;i<3;i++) {
         vec_ranges_width[i] = vec_ranges_hi[i]-vec_ranges_lo[i];
     }
-    for(i=0;i<NGALS;i++) {
-        galsx0[i]=0;
-        galsy0[i]=0;
-        galsz0[i]=0;
-        galsx1[i]=0;
-        galsy1[i]=0;
-        galsz1[i]=0;
+    for(i=0;i<2;i++) {
+        for(j=0;j<NGALS;j++) {
+            galsx[i][j]=0;
+            galsy[i][j]=0;
+            galsz[i][j]=0;
+        }
     }
 
     int NUM_GALAXIES[2] = {NGALS,NGALS};
@@ -71,18 +77,19 @@ int main(int argc, char **argv)
     float temp0, temp1, temp2, dummy, tempdum0, tempdum1, tempdum2;
 
     FILE *infile[2], *outfile ;
-        for (i=0;i<2;i++) {
-            infile[i] = fopen(argv[optind+i],"r");
-            printf("Opening input file %d: %s\n",i,argv[optind+i]);
-        }
+    for (i=0;i<2;i++) {
+        infile[i] = fopen(argv[optind+i],"r");
+        printf("Opening input file %d: %s\n",i,argv[optind+i]);
+    }
 
     NUM_GALAXIES[0] = 0;
     NUM_GALAXIES[1] = 0;
 
     int max = 800000;
 
-    read_in_6_cols(infile[0], NGALS, galsx0, galsy0, galsz0, &NUM_GALAXIES[0], vec_ranges_lo, vec_ranges_hi, max);
-    read_in_6_cols(infile[1], NGALS, galsx1, galsy1, galsz1, &NUM_GALAXIES[1], vec_ranges_lo, vec_ranges_hi, max);
+    for(i=0;i<2;i++) {
+        read_in_6_cols(infile[i], NGALS, galsx[i], galsy[i], galsz[i], &NUM_GALAXIES[i], vec_ranges_lo, vec_ranges_hi, max);
+    }
 
     printf("NUM_GALAXIES[0]: %d\n",NUM_GALAXIES[0]);
     printf("NUM_GALAXIES[1]: %d\n",NUM_GALAXIES[1]);
@@ -105,30 +112,36 @@ int main(int argc, char **argv)
     // Assign a chunk coordinate to each
     ////////////////////////////////////////////////////////////////////////////
     printf("Assign chunk coordinates...\n");
-    
-    int *gal_chunk_coordinate0;
-    gal_chunk_coordinate0 = (int*)malloc(NUM_GALAXIES[0]*3*sizeof(int));
 
-    int *gal_chunk_coordinate1;
-    gal_chunk_coordinate1 = (int*)malloc(NUM_GALAXIES[0]*3*sizeof(int));
+    //int *gal_chunk_coordinate0;
+    //gal_chunk_coordinate0 = (int*)malloc(NUM_GALAXIES[0]*3*sizeof(int));
+
+    //int *gal_chunk_coordinate1;
+    //gal_chunk_coordinate1 = (int*)malloc(NUM_GALAXIES[0]*3*sizeof(int));
+
+    int *gal_chunk_coordinate[2];
+    for(i=0;i<2;i++) {
+        gal_chunk_coordinate[i] = (int*)malloc(NUM_GALAXIES[i]*3*sizeof(int));
+    }
 
 
     float coord[3] = {0.0, 0.0, 0.0};
     int chunk_coord[3] = {0,0,0};
 
-    for(i=0;i<NUM_GALAXIES[0];i++) {
-        if(i%100000==0)
-        {
-            printf("%d\n",i);
-            fflush(stdout);
-        }
-        coord[0] = galsx0[i];
-        coord[1] = galsy0[i];
-        coord[2] = galsz0[i];
-        
-        assign_chunk_coordinate(coord, vec_ranges_lo, vec_binwidths, chunk_coord);
-        for(j=0;j<3;j++) {
-            gal_chunk_coordinate0[i*3 + j] = chunk_coord[j];
+    for(i=0;i<2;i++) {
+        for(j=0;j<NUM_GALAXIES[i];j++) {
+            if(j%100000==0) {
+                printf("%d\n",j);
+                fflush(stdout);
+            }
+            coord[0] = galsx[i][j];
+            coord[1] = galsy[i][j];
+            coord[2] = galsz[i][j];
+
+            assign_chunk_coordinate(coord, vec_ranges_lo, vec_binwidths, chunk_coord);
+            for(k=0;k<3;k++) {
+                gal_chunk_coordinate[i][j*3 + k] = chunk_coord[k];
+            }
         }
     }
 
@@ -138,20 +151,22 @@ int main(int argc, char **argv)
     // Divide up the galaxies into the chunked voxels.
     ////////////////////////////////////////////////////////////////////////////
     printf("Divide up the chunked voxels....\n");
-    float *gal_chunksx[NBINS_SUBVOLUME_X][NBINS_SUBVOLUME_Y][NBINS_SUBVOLUME_Z];
-    float *gal_chunksy[NBINS_SUBVOLUME_X][NBINS_SUBVOLUME_Y][NBINS_SUBVOLUME_Z];
-    float *gal_chunksz[NBINS_SUBVOLUME_X][NBINS_SUBVOLUME_Y][NBINS_SUBVOLUME_Z];
+    float *gal_chunksx[2][NBINS_SUBVOLUME_X][NBINS_SUBVOLUME_Y][NBINS_SUBVOLUME_Z];
+    float *gal_chunksy[2][NBINS_SUBVOLUME_X][NBINS_SUBVOLUME_Y][NBINS_SUBVOLUME_Z];
+    float *gal_chunksz[2][NBINS_SUBVOLUME_X][NBINS_SUBVOLUME_Y][NBINS_SUBVOLUME_Z];
 
     // Allocate memory.
-    int *num_in_gal_chunks[NBINS_SUBVOLUME_X][NBINS_SUBVOLUME_Y]; //[NBINS_SUBVOLUME_Z];
+    int *num_in_gal_chunks[2][NBINS_SUBVOLUME_X][NBINS_SUBVOLUME_Y]; //[NBINS_SUBVOLUME_Z];
 
-    for(i=0;i<NBINS_SUBVOLUME_X;i++) {
-        for(j=0;j<NBINS_SUBVOLUME_Y;j++) {
-            num_in_gal_chunks[i][j] = (int*)malloc(NBINS_SUBVOLUME_Z*sizeof(int)); 
-            for(k=0;k<NBINS_SUBVOLUME_Z;k++) {
-                gal_chunksx[i][j][k] = (float*)malloc(MAX_NGALS_IN_SUBVOLUME*sizeof(float));
-                gal_chunksy[i][j][k] = (float*)malloc(MAX_NGALS_IN_SUBVOLUME*sizeof(float));
-                gal_chunksz[i][j][k] = (float*)malloc(MAX_NGALS_IN_SUBVOLUME*sizeof(float));
+    for(nfile=0;nfile<2;nfile++) {
+        for(i=0;i<NBINS_SUBVOLUME_X;i++) {
+            for(j=0;j<NBINS_SUBVOLUME_Y;j++) {
+                num_in_gal_chunks[nfile][i][j] = (int*)malloc(NBINS_SUBVOLUME_Z*sizeof(int)); 
+                for(k=0;k<NBINS_SUBVOLUME_Z;k++) {
+                    gal_chunksx[nfile][i][j][k] = (float*)malloc(MAX_NGALS_IN_SUBVOLUME*sizeof(float));
+                    gal_chunksy[nfile][i][j][k] = (float*)malloc(MAX_NGALS_IN_SUBVOLUME*sizeof(float));
+                    gal_chunksz[nfile][i][j][k] = (float*)malloc(MAX_NGALS_IN_SUBVOLUME*sizeof(float));
+                }
             }
         }
     }
@@ -160,15 +175,17 @@ int main(int argc, char **argv)
 
 
     // Set everything equal to 0
-    for(i=0;i<NBINS_SUBVOLUME_X;i++) {
-        for(j=0;j<NBINS_SUBVOLUME_Y;j++) {
-            for(k=0;k<NBINS_SUBVOLUME_Z;k++) {
-                num_in_gal_chunks[i][j][k] = 0;
-                for(n=0;n<MAX_NGALS_IN_SUBVOLUME;n++) {
-                    gal_chunksx[i][j][k][n] = 0.0;
-                    gal_chunksy[i][j][k][n] = 0.0;
-                    gal_chunksz[i][j][k][n] = 0.0;
-                    //printf("%f ",gal_chunksx[i][j][k][n]);
+    for(nfile=0;nfile<2;nfile++) {
+        for(i=0;i<NBINS_SUBVOLUME_X;i++) {
+            for(j=0;j<NBINS_SUBVOLUME_Y;j++) {
+                for(k=0;k<NBINS_SUBVOLUME_Z;k++) {
+                    num_in_gal_chunks[nfile][i][j][k] = 0;
+                    for(n=0;n<MAX_NGALS_IN_SUBVOLUME;n++) {
+                        gal_chunksx[nfile][i][j][k][n] = 0.0;
+                        gal_chunksy[nfile][i][j][k][n] = 0.0;
+                        gal_chunksz[nfile][i][j][k][n] = 0.0;
+                        //printf("%f ",gal_chunksx[i][j][k][n]);
+                    }
                 }
             }
         }
@@ -181,79 +198,47 @@ int main(int argc, char **argv)
     ii,jj,kk;
     int index = 0;
 
-    for(i=0;i<NUM_GALAXIES[0];i++) {
+    printf("Building the chunks of galaxies.\n");
 
-        ii = gal_chunk_coordinate0[i*3 + 0];
-        jj = gal_chunk_coordinate0[i*3 + 1];
-        kk = gal_chunk_coordinate0[i*3 + 2];
+    for(nfile=0;nfile<2;nfile++) {
+        for(i=0;i<NUM_GALAXIES[nfile];i++) {
 
+            ii = gal_chunk_coordinate[nfile][i*3 + 0];
+            jj = gal_chunk_coordinate[nfile][i*3 + 1];
+            kk = gal_chunk_coordinate[nfile][i*3 + 2];
 
-        index = num_in_gal_chunks[ii][jj][kk];
+            index = num_in_gal_chunks[nfile][ii][jj][kk];
 
-        //printf("%d %d %d %d %f %f %f\n",ii,jj,kk,index,galsx0[i],galsy0[i],galsz0[i]);
+            //printf("%d %d %d %d %f %f %f\n",ii,jj,kk,index,galsx0[i],galsy0[i],galsz0[i]);
 
-        gal_chunksx[ii][jj][kk][index] = galsx0[i];
-        gal_chunksy[ii][jj][kk][index] = galsy0[i];
-        gal_chunksz[ii][jj][kk][index] = galsz0[i];
+            gal_chunksx[nfile][ii][jj][kk][index] = galsx[nfile][i];
+            gal_chunksy[nfile][ii][jj][kk][index] = galsy[nfile][i];
+            gal_chunksz[nfile][ii][jj][kk][index] = galsz[nfile][i];
 
-        //printf("%f\n",galsx0[i]);
-        //printf("%f %f %f (%d,%d,%d) %d\n",gal_chunksx[ii][jj][kk][index],gal_chunksy[ii][jj][kk][index],gal_chunksz[ii][jj][kk][index],ii,jj,kk,index);
+            //printf("%f\n",galsx0[i]);
+            //printf("%f %f %f (%d,%d,%d) %d\n",gal_chunksx[ii][jj][kk][index],gal_chunksy[ii][jj][kk][index],gal_chunksz[ii][jj][kk][index],ii,jj,kk,index);
 
-        num_in_gal_chunks[ii][jj][kk]++;
+            num_in_gal_chunks[nfile][ii][jj][kk]++;
 
-        if(num_in_gal_chunks[ii][jj][kk]>MAX_NGALS_IN_SUBVOLUME)
-        {
-            printf("Too many galaxies in a subvolume!!! %d\n",MAX_NGALS_IN_SUBVOLUME);
-            printf("%d %d %d %d %d\n",i,ii,jj,kk,index);
-            exit(-1);
+            if(num_in_gal_chunks[nfile][ii][jj][kk]>MAX_NGALS_IN_SUBVOLUME)
+            {
+                printf("Too many galaxies in a subvolume!!! %d\n",MAX_NGALS_IN_SUBVOLUME);
+                printf("%d %d %d %d %d %d\n",nfile,i,ii,jj,kk,index);
+                exit(-1);
+            }
         }
     }
 
     printf("Chunked up the galaxies.\n");
+    ///////////////////////////////////////////////////////////////////////////
 
-    //exit(1);
-
-    //for(i=0;i<NBINS_SUBVOLUME_X;i++) {
-    //printf("----------- %d\n",i);
-    //for(j=0;j<NBINS_SUBVOLUME_Y;j++) {
-    //for(k=0;k<NBINS_SUBVOLUME_Z;k++) {
-    //printf("%d ",num_in_gal_chunks[i][j][k]);
-    //}
-    //printf("\n");
-    //}
-    //}
-
-    //exit(1);
-    // Test the chunking.
-    float x,y,z;
-    int ngals_in_chunk;
-    /*
-       for(i=0;i<NBINS_SUBVOLUME_X;i++) 
-       for(j=0;j<NBINS_SUBVOLUME_Y;j++) 
-       for(k=0;k<NBINS_SUBVOLUME_Z;k++) {
-       ngals_in_chunk = num_in_gal_chunks[i][j][k];
-       for(n=0;n<ngals_in_chunk;n++) {
-    //printf("%d\n",n);
-    x = gal_chunksx[i][j][k][n];
-    y = gal_chunksy[i][j][k][n];
-    z = gal_chunksz[i][j][k][n];
-    //printf("%d %d %d %d     %f %f %f\n",i,j,k,n,x,y,z);
-    //printf("%d %d %d %d %d\n",i,j,k,ngals_in_chunk,n);
-    //printf("%f %f %f\n",x,y,z);
-
-    }
-    }
-     */
-
-    printf("Calculating distances....\n");
     ///////////////////////////////////////////////////////////////////////////
     // Calc distances with only the chunks.
     ///////////////////////////////////////////////////////////////////////////
-    float *gals_superchunk[30*MAX_NGALS_IN_SUBVOLUME];
-    for(i=0;i<30*MAX_NGALS_IN_SUBVOLUME;i++) {
-        gals_superchunk[i] = (float*)malloc(3*sizeof(float));
-    }
+    printf("Calculating distances....\n");
 
+    float x,y,z;
+    int ngals_in_chunk;
 
     int n0,n1,ntemp,nindex;
     int iindex,jindex,kindex;
@@ -263,11 +248,10 @@ int main(int argc, char **argv)
     distances = (float*)malloc(MAX_DISTANCES*sizeof(float));
     if(distances)
         printf("Success!\n");
-    else
+    else {
         printf("Booooo!\n");
-
-    float *unique_distances;
-    unique_distances = (float*)malloc(MAX_DISTANCES*sizeof(float));
+        exit(-1);
+    }
 
     int ndist = 0;
     float disttemp = 0;
@@ -282,11 +266,10 @@ int main(int argc, char **argv)
         for(j=0;j<NBINS_SUBVOLUME_Y;j++) {
             for(k=0;k<NBINS_SUBVOLUME_Z;k++) {
 
-                n0 = num_in_gal_chunks[i][j][k];
+                n0 = num_in_gal_chunks[0][i][j][k];
 
                 // Only do the calculation if there are galaxies in the chunk.
-                if(n0>0)
-                {
+                if(n0>0) {
                     for(ii=0;ii<2;ii++) {
                         for(jj=0;jj<2;jj++) {
                             for(kk=0;kk<2;kk++) {
@@ -300,16 +283,15 @@ int main(int argc, char **argv)
                                         jindex<NBINS_SUBVOLUME_Y && \
                                         kindex<NBINS_SUBVOLUME_Z) {
 
-                                    n1 = num_in_gal_chunks[iindex][jindex][kindex];
+                                    n1 = num_in_gal_chunks[1][iindex][jindex][kindex];
 
-                                    if(n1>0)
-                                    {
-
+                                    if(n1>0) {
                                         for(igal0=0;igal0<n0;igal0++) {
 
-                                            x0 = gal_chunksx[i][j][k][igal0];
-                                            y0 = gal_chunksy[i][j][k][igal0];
-                                            z0 = gal_chunksz[i][j][k][igal0];
+                                            // Gals from first file.
+                                            x0 = gal_chunksx[0][i][j][k][igal0];
+                                            y0 = gal_chunksy[0][i][j][k][igal0];
+                                            z0 = gal_chunksz[0][i][j][k][igal0];
 
                                             igal1min = 0;
                                             if (ii==0 && jj==0 && kk==0)
@@ -318,9 +300,9 @@ int main(int argc, char **argv)
                                             //printf("igal1min: %d\n",igal1min);
                                             for(igal1=igal1min;igal1<n1;igal1++) {
 
-                                                x1 = gal_chunksx[iindex][jindex][kindex][igal1];
-                                                y1 = gal_chunksy[iindex][jindex][kindex][igal1];
-                                                z1 = gal_chunksz[iindex][jindex][kindex][igal1];
+                                                x1 = gal_chunksx[1][iindex][jindex][kindex][igal1];
+                                                y1 = gal_chunksy[1][iindex][jindex][kindex][igal1];
+                                                z1 = gal_chunksz[1][iindex][jindex][kindex][igal1];
 
                                                 if(i==15)
                                                     printf("%d %d %d %d %f %f %f\n",igal0,igal1,n0,n1,x0,y0,z0);
@@ -365,26 +347,6 @@ int main(int argc, char **argv)
 
     printf("Calculated the distances.\n");
 
-    /*
-       printf("Copying over the distances,\n");
-       float *temp_distances;
-       temp_distances = (float*)malloc(ndist*sizeof(float));
-       for(i=0;i<ndist;i++) {
-       temp_distances[i] = 0.;
-       }
-
-       for(i=0;i<ndist;i++) {
-       temp_distances[i] = distances[i];
-       if(distances[i]!=distances[i]){
-       printf("BAD!!!! distances[i]: %f\n",distances[i]);
-       exit(-1);
-       }
-       if(i%10000==0)
-       printf("%f ",temp_distances[i]);
-       }
-       printf("\n");
-       printf("Copied over the distances,\n");
-     */
     printf("ndist: %d\n",ndist);
 
     // Free up some memory.
@@ -413,7 +375,6 @@ int main(int argc, char **argv)
 
     if(current_dist!=prev_dist)
     {
-    unique_distances[final_ndist] = current_dist;
     prev_dist = current_dist;
     final_ndist++;
     }
@@ -424,7 +385,6 @@ int main(int argc, char **argv)
     //if(i%30==0)
     //printf("\n");
     }
-    printf("ndist/unique: %d %d\n",ndist,final_ndist);
      */
     printf("ndist: %d\n",ndist);
 
@@ -444,7 +404,6 @@ int main(int argc, char **argv)
     float dist;
     //for(i=0;i<final_ndist;i++){
     for(i=0;i<ndist;i++){
-        //dist=unique_distances[i];
         dist=distances[i];
         if(dist>=lo && dist<=hi)
         {
@@ -459,6 +418,7 @@ int main(int argc, char **argv)
     output = (char*)malloc(1024*sizeof(char));
 
     fprintf(outfile,"%d\n",NUM_GALAXIES[0]);
+    fprintf(outfile,"%d\n",NUM_GALAXIES[1]);
     for(i=0;i<nbins;i++){
         //printf("----------------- %d\n",i);
         //printf("%.1f %.1f   %d\n",i*binwidth + lo , (i+1)*binwidth + lo,histogram[i]);
@@ -471,35 +431,31 @@ int main(int argc, char **argv)
     ////////////////////////////////////////////////////////////////////////////
     // Free up everything. 
     ////////////////////////////////////////////////////////////////////////////
-    free(galsx0);
-    free(galsy0);
-    free(galsz0);
-    free(galsx1);
-    free(galsy1);
-    free(galsz1);
+    for(nfile=0;nfile<2;nfile++) {
+        free(galsx[nfile]);
+        free(galsy[nfile]);
+        free(galsz[nfile]);
+        free(gal_chunk_coordinate[nfile]);
+    }
     free(distances);
-    free(unique_distances);
     free(histogram);
-    free(gal_chunk_coordinate0);
-    free(gal_chunk_coordinate1);
     //for(i=0;i<NGALS;i++) 
     //free(gal_chunk_coordinate[i]);
 
-    for(i=0;i<NBINS_SUBVOLUME_X;i++) {
-        for(j=0;j<NBINS_SUBVOLUME_Y;j++) {
+    for(nfile=0;nfile<2;nfile++) {
+        for(i=0;i<NBINS_SUBVOLUME_X;i++) {
+            for(j=0;j<NBINS_SUBVOLUME_Y;j++) {
 
-            free(num_in_gal_chunks[i][j]);
+                free(num_in_gal_chunks[nfile][i][j]);
 
-            for(k=0;k<NBINS_SUBVOLUME_Z;k++) {
-                free(gal_chunksx[i][j][k]);
-                free(gal_chunksy[i][j][k]);
-                free(gal_chunksz[i][j][k]);
+                for(k=0;k<NBINS_SUBVOLUME_Z;k++) {
+                    free(gal_chunksx[nfile][i][j][k]);
+                    free(gal_chunksy[nfile][i][j][k]);
+                    free(gal_chunksz[nfile][i][j][k]);
+                }
             }
         }
     }
-
-    for(i=0;i<30*MAX_NGALS_IN_SUBVOLUME;i++)
-        free(gals_superchunk[i]);
 
     fclose(infile[0]);
     fclose(infile[1]);
