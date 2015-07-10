@@ -46,8 +46,11 @@ def main():
     #nd = 401927.
     #nr = 216323.
 
-    nd = 401927.
-    nr = 213277.
+    #nd = 401927.
+    #nr = 213277.
+
+    nd = 101292.
+    nr = 57997.
 
     ############################################################################
     ############################################################################
@@ -135,11 +138,11 @@ def main():
     plt.xticks(fontsize=24,weight='bold')
     plt.yticks(fontsize=24,weight='bold')
 
-    bin_mid *= 0.7
+    #bin_mid *= 0.7
 
-    #ax0.scatter(bin_mid,bin_mid*bin_mid*w,s=30)
-    ax0.scatter(bin_mid,np.log10(w),s=30)
-    #ax0.scatter(bin_mid,w,s=30)
+    #ax0.scatter(bin_mid,bin_mid*w,s=30)
+    #ax0.scatter(bin_mid,np.log10(w),s=30)
+    ax0.scatter(bin_mid,w,s=30)
     #ax0.set_xlabel(r"$w$ (r)",fontsize=24, weight='bold')
     #ax0.set_ylabel(r"w($\theta$)",fontsize=24, weight='bold')
 

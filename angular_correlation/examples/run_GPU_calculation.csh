@@ -11,8 +11,10 @@ endif
 #set flat = '../sample_data/flat_'$ngals'k_arcmin.dat'
 #set data = '../sample_data/data_'$ngals'k_arcmin.dat'
 
-set data = '~/Downloads/dr10dat.txt'
-set flat = '~/Downloads/mockdat.txt'
+#set data = '~/Downloads/dr10dat.txt'
+#set flat = '~/Downloads/mockdat.txt'
+set flat = '~/Downloads/amockdat_less0.5.txt'
+set data = '~/Downloads/dr10dat_less0.5.txt'
 #set data = '~/Downloads/adr10dat.txt'
 #set flat = '~/Downloads/amockdat.txt'
 #set data = '~/Downloads/dr10-10k.dat'
@@ -35,7 +37,7 @@ set global_params = '-w 1.0 -L 0.00 -l 0 -p'
 #set tag = 'evenbinning_GPU_cartesian_allrandom_width1Mpc'
 #set tag = 'evenbinning_GPU_cartesian_abigrandom_width2Mpc'
 #set tag = 'evenbinning_GPU_cartesian_amockdat_width2Mpc'
-set tag = 'evenbinning_GPU_cartesian_mockdat_width1Mpc'
+set tag = 'evenbinning_GPU_cartesian_amockdat_width1Mpc_less0.5'
 #set tag = 'evenbinning_GPU_cartesian_DJB_files_10k100k'
 
 ################################################################################

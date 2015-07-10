@@ -730,15 +730,17 @@ int doCalcMpc(FILE *infile0, FILE *infile1, FILE *outfile, bool silent_on_GPU_te
     h_x0 = (float*)malloc(size_of_galaxy_array0);
     h_y0 = (float*)malloc(size_of_galaxy_array0);
     h_z0 = (float*)malloc(size_of_galaxy_array0);
-    float temp0, temp1, temp2, tempdum;
+    float temp0, temp1, temp2, tempdum,redshift;
 
+    int ngaltemp = 0;
     for(int i=0; i<NUM_GALAXIES0; i++)
     {
         //fscanf(infile0, "%f %f %f", &temp0, &temp1, &temp2);
-        fscanf(infile0, "%e %e %e %e %e %e", &tempdum, &tempdum, &tempdum, &temp0, &temp1, &temp2);
+        fscanf(infile0, "%e %e %e %e %e %e", &tempdum, &tempdum, &redshift, &temp0, &temp1, &temp2);
         h_x0[i] = temp0; ///scale_factor;
         h_y0[i] = temp1; ///scale_factor;
         h_z0[i] = temp2; ///scale_factor;
+        ngaltemp++;
         if (i<10)
             printf("%f %f %f\n", h_x0[i], h_y0[i], h_z0[i]);
     }
