@@ -20,7 +20,9 @@ INSTALL_DIR       := ../bin/
 #SDK_INSTALL_PATH  := ${HOME}/CUDA/SDK_4.0/
 #CUDA_INSTALL_PATH := /opt/cuda/
 #SDK_INSTALL_PATH  := $(HOME)/NVIDIA_GPU_Computing_SDK
-CUDA_INSTALL_PATH := /usr/local/cuda/
+#CUDA_INSTALL_PATH := /usr/local/cuda/
+#SDK_INSTALL_PATH  := /usr/include
+CUDA_INSTALL_PATH := /usr/local/cuda-6.5/
 SDK_INSTALL_PATH  := /usr/include
 #CUDA_INSTALL_PATH := /usr/local/cuda-5.0/
 #CUDA_INSTALL_PATH := /usr/local/cuda/
@@ -80,9 +82,12 @@ angular_correlation_C_version_with_double_precision : angular_correlation_C_vers
 	mkdir -p $(INSTALL_DIR)
 	$(CC) -O1 -o $(INSTALL_DIR)/$@ $@.cc
 
-test_precalc : test_precalc.cc
+#test_precalc : test_precalc.cc
+test_precalc : test_precalc.c precalc_distances.c
 	mkdir -p $(INSTALL_DIR)
-	$(CC) -DDEBUG -g -o $(INSTALL_DIR)/$@ $@.cc
+	gcc -c precalc_distances.c
+	gcc -c test_precalc.c
+	$(CC) -DDEBUG -g -o $(INSTALL_DIR)/$@ precalc_distances.o test_precalc.o
 
 clean:
 	rm -f $(INSTALL_DIR)/angular_correlation_C_version 

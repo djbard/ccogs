@@ -6,29 +6,23 @@
 
 #include "precalc_distances.h"
 
-#define NGALS 1000000
-#define MAX_NGALS_IN_SUBVOLUME 800
+#define NGALS 300000
+#define MAX_NGALS_IN_SUBVOLUME 1000
 #define MAX_DISTANCES (NGALS/1000)*NGALS
 #define NBINS_SUBVOLUME_X 16
 #define NBINS_SUBVOLUME_Y 29
 #define NBINS_SUBVOLUME_Z 16
 
-///////////////////////////////////////////////////////////////////////////////
-int compare (const void * a, const void * b)
-{
-    float fa = *(const float*) a;
-    float fb = *(const float*) b;
-    return (fa > fb) - (fa < fb);
-}
-///////////////////////////////////////////////////////////////////////////////
+int compare (const void * a, const void * b);
 
-int main(int argc, char **argv)
+int main()
 {
 
-    float maxsep = 150.;
+    float maxsep;
+    maxsep = 150;
     //float vec_ranges_lo[3] = {-2000., -1720., 755.};
     //float vec_ranges_hi[3] = {140., 1780., 2500.};
-    float vec_ranges_lo[3] = {1e9,1e9,1e9};
+    float vec_ranges_lo[3] = {1000000.,1000000.,1000000.};
     float vec_ranges_hi[3] = {-1e9,-1e9,-1e9};
     float vec_ranges_width[3] = {0.0,0.0,0.0};
     int vec_nbins[3] = {0,0,0};
@@ -41,38 +35,53 @@ int main(int argc, char **argv)
     // Gen some fake galaxies.
     ////////////////////////////////////////////////////////////////////////////
     //printf("Gen fake galaxies....\n");
+    printf("Allocating memory for the galaxy coordinates...\n");
     float *galsx, *galsy, *galsz;
     galsx = (float*)malloc(NGALS*sizeof(float));
     galsy = (float*)malloc(NGALS*sizeof(float));
     galsz = (float*)malloc(NGALS*sizeof(float));
-    //
-    //
+    printf("Allocated memory for the galaxy coordinates.\n");
+    
+    for(int i=0;i<3;i++) {
+        vec_ranges_width[i] = vec_ranges_hi[i]-vec_ranges_lo[i];
+    }
+    for(int i=0;i<NGALS;i++) {
+        galsx[i]=0;
+        galsy[i]=0;
+        galsz[i]=0;
+    }
+    
     //for(int i=0;i<NGALS;i++)
     //{
-    //galsx[i] = vec_ranges_width[0]*rand()/(float)RAND_MAX + vec_ranges_lo[0];
-    //galsy[i] = vec_ranges_width[1]*rand()/(float)RAND_MAX + vec_ranges_lo[1];
-    //galsz[i] = vec_ranges_width[2]*rand()/(float)RAND_MAX + vec_ranges_lo[2];
-    //
+        //galsx[i] = vec_ranges_width[0]*rand()/(float)RAND_MAX + vec_ranges_lo[0];
+        //galsy[i] = vec_ranges_width[1]*rand()/(float)RAND_MAX + vec_ranges_lo[1];
+        //galsz[i] = vec_ranges_width[2]*rand()/(float)RAND_MAX + vec_ranges_lo[2];
     //}
 
+    int NUM_GALAXIES[2] = {NGALS,NGALS};
     //exit(1);
 
     ////////////////////////////////////////////////////////////////////////////
     // Read in galaxies.
     ////////////////////////////////////////////////////////////////////////////
+    ///*
     printf("Reading in the galaxies....\n");
-    float temp0, temp1, temp2, dummy, tempdum;
+    float temp0, temp1, temp2, dummy, tempdum0, tempdum1, tempdum2;
 
     FILE *infile0, *infile1, *outfile ;
 
-    infile0 = fopen(argv[optind],"r");
-    infile1 = fopen(argv[optind+1],"r");
+    //infile0 = fopen(argv[optind],"r");
+    //infile1 = fopen(argv[optind+1],"r");
 
-    int NUM_GALAXIES[2] = {0,0};
+    infile0 = fopen("/home/bellis/Downloads/amockdat4400.txt","r");
+    //infile1 = fopen("/home/bellis/Downloads/amockdat4400.txt","r");
+    
+    NUM_GALAXIES[0] = 0;
+    NUM_GALAXIES[1] = 0;
 
     int j = 0;
     //while(fscanf(infile[i], "%d %f %f %f %f %f %f", &idummy, &dummy, &dummy, &dummy, &temp0, &temp1, &temp2) != EOF)
-    while(fscanf(infile0, "%e %e %e %e %e %e", &tempdum, &tempdum, &tempdum, &temp0, &temp1, &temp2) != EOF)
+    while(fscanf(infile0, "%e %e %e %e %e %e", &tempdum0, &tempdum1, &tempdum2, &temp0, &temp1, &temp2) != EOF)
     {
         galsx[j] = temp0;///scale_factor;
         galsy[j] = temp1;///scale_factor;
@@ -122,7 +131,6 @@ int main(int argc, char **argv)
 
     for(int i=0;i<3;i++) {
         printf("%d %d %f\n",i,vec_nbins[i],vec_binwidths[i]);
-        vec_ranges_width[i] = vec_ranges_hi[i]-vec_ranges_lo[i];
     }
 
     //fflush(stdout); 
@@ -404,6 +412,11 @@ int main(int argc, char **argv)
     {
         //printf("%f ",distances[i]);
         current_dist=distances[i];
+        //if(current_dist>100 && current_dist<101)
+        //{
+            //printf("%.18f\n",current_dist);
+        //}
+
         if(current_dist!=prev_dist)
         {
             unique_distances[final_ndist] = current_dist;
@@ -412,7 +425,7 @@ int main(int argc, char **argv)
         }
         else
         {
-            printf("%f %f\n",current_dist,prev_dist);
+            //printf("%.10f %.10f\n",current_dist,prev_dist);
         }
         //if(i%30==0)
         //printf("\n");
@@ -445,11 +458,23 @@ int main(int argc, char **argv)
     }
 
 
+    ////////////////////////////////////////////////////////////////////////////
+    // Free up everything. 
+    ////////////////////////////////////////////////////////////////////////////
     free(galsx);
     free(galsy);
     free(galsz);
+    free(distances);
+    free(unique_distances);
+    free(histogram);
+    for(int i=0;i<NGALS;i++) 
+        free(gal_chunk_coordinate[i]);
+
     for(int i=0;i<NBINS_SUBVOLUME_X;i++) {
         for(int j=0;j<NBINS_SUBVOLUME_Y;j++) {
+
+            free(num_in_gal_chunks[i][j]);
+
             for(int k=0;k<NBINS_SUBVOLUME_Z;k++) {
                 free(gal_chunksx[i][j][k]);
                 free(gal_chunksy[i][j][k]);
@@ -458,5 +483,18 @@ int main(int argc, char **argv)
         }
     }
 
+    for(int i=0;i<30*MAX_NGALS_IN_SUBVOLUME;i++)
+        free(gals_superchunk[i]);
+
+    fclose(infile0);
     return 0;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+int compare (const void * a, const void * b)
+{
+    float fa = *(const float*) a;
+    float fb = *(const float*) b;
+    return (fa > fb) - (fa < fb);
+}
+///////////////////////////////////////////////////////////////////////////////
